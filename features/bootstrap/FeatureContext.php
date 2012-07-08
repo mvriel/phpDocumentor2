@@ -42,6 +42,32 @@ class FeatureContext extends BehatContext
     }
 
     /**
+     * @Given /^I am in the temporary directory$/
+     */
+    public function iAmInTheTemporaryDirectory()
+    {
+        chdir(sys_get_temp_dir());
+    }
+
+    /**
+     * @Given /^a folder "([^"]*)"$/
+     */
+    public function aFolder($arg1)
+    {
+        if (!file_exists($arg1)) {
+            mkdir($arg1, 0777, true);
+        }
+    }
+
+    /**
+     * @Given /^a file "([^"]*)" with$/
+     */
+    public function aFileWith($arg1, PyStringNode $string)
+    {
+        file_put_contents($arg1, (string)$string);
+    }
+
+    /**
      * @When /^I run "([^"]*)"$/
      */
     public function iRun($arg1)
@@ -66,6 +92,7 @@ class FeatureContext extends BehatContext
      */
     public function iRunPhpDocumentorAgainstTheFile($arg1)
     {
+        $arg1 = str_replace('{tmp}', sys_get_temp_dir(), $arg1);
         $this->iRun("php bin/phpdoc.php -f $arg1 -t build --config=none --force");
     }
 
@@ -85,6 +112,7 @@ class FeatureContext extends BehatContext
      */
     public function iRunPhpDocumentorAgainstTheFileUsingOption($arg1, $arg2)
     {
+        $arg1 = str_replace('{tmp}', sys_get_temp_dir(), $arg1);
         $this->iRun("php bin/phpdoc.php -f $arg1 -t build --config=none --force $arg2");
     }
 
@@ -93,6 +121,7 @@ class FeatureContext extends BehatContext
      */
     public function iRunPhpDocumentorAgainstTheDirectory($arg1)
     {
+        $arg1 = str_replace('{tmp}', sys_get_temp_dir(), $arg1);
         $this->iRun("php bin/phpdoc.php -d $arg1 -t build --config=none --force");
     }
 
@@ -190,6 +219,32 @@ class FeatureContext extends BehatContext
             throw new \Exception(
                 "Class count did not match in structure file:\n"
                 . $structure->asXML()
+            );
+        }
+    }
+
+    /**
+     * @Then /^my AST should contain the tag "([^"]*)" for function "([^"]*)" with$/
+     */
+    public function myAstShouldContainTheTagForFunctionWith($arg1, $arg2, PyStringNode $string)
+    {
+        $structure = simplexml_load_file('build/structure.xml');
+        $tags = $structure->xpath(
+            '/project/file/function[full_name="'.$arg2.'"]'
+            .'/docblock/tag[@name="'.$arg1.'"]'
+        );
+        if (!$tags) {
+            throw new \Exception(
+                'Unable to find tag '. $arg1 . ' for function ' . $arg2
+            );
+        }
+
+        /** @var SimpleXMLElement $tag */
+        $tag = reset($tags);
+        if ($tag->nodeValue != (string)$string) {
+            throw new \Exception(
+                'The contents of the tag did not match the expected value: '
+                .$tag->nodeValue
             );
         }
     }
