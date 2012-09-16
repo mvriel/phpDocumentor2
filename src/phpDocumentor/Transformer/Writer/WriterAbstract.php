@@ -15,6 +15,9 @@
 
 namespace phpDocumentor\Transformer\Writer;
 
+use phpDocumentor\Transformer\Transformer;
+use phpDocumentor\Transformer\Transformation;
+
 /**
  * Base class for the actual transformation business logic (writers).
  *
@@ -27,6 +30,29 @@ namespace phpDocumentor\Transformer\Writer;
  */
 abstract class WriterAbstract extends \phpDocumentor\Transformer\TransformerAbstract
 {
+    /** @var \phpDocumentor\Transformer\Transformer */
+    protected $transformer;
+
+    /**
+     * Initializes the writer with the transformer.
+     *
+     * @param Transformer $transformer
+     */
+    function __construct(Transformer $transformer)
+    {
+        $this->transformer = $transformer;
+    }
+
+    /**
+     * Returns the transformer for this writer.
+     *
+     * @return Transformer
+     */
+    public function getTransformer()
+    {
+        return $this->transformer;
+    }
+
     /**
      * Abstract definition of the execute method.
      *
@@ -38,7 +64,7 @@ abstract class WriterAbstract extends \phpDocumentor\Transformer\TransformerAbst
      * @return void
      */
     abstract public function transform(
-        \DOMDocument $structure, \phpDocumentor\Transformer\Transformation $transformation
+        \DOMDocument $structure, Transformation $transformation
     );
 
     /**

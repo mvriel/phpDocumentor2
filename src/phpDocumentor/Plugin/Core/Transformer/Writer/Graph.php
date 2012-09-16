@@ -181,7 +181,7 @@ class Graph extends \phpDocumentor\Transformer\Writer\WriterAbstract
         \DOMDocument $structure,
         \phpDocumentor\Transformer\Transformation $transformation
     ) {
-        $filename = $transformation->getTransformer()->getTarget()
+        $filename = $this->getTransformer()->getTarget()
             . DIRECTORY_SEPARATOR . $transformation->getArtifact();
         $graph = \phpDocumentor\GraphViz\Graph::create()
                 ->setRankSep('1.0')

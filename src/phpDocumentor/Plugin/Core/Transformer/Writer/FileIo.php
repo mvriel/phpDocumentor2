@@ -53,7 +53,7 @@ class FileIo extends \phpDocumentor\Transformer\Writer\WriterAbstract
     public function transform(\DOMDocument $structure,
         \phpDocumentor\Transformer\Transformation $transformation
     ) {
-        $artifact = $transformation->getTransformer()->getTarget()
+        $artifact = $this->getTransformer()->getTarget()
             . DIRECTORY_SEPARATOR . $transformation->getArtifact();
         $transformation->setArtifact($artifact);
 
@@ -88,13 +88,13 @@ class FileIo extends \phpDocumentor\Transformer\Writer\WriterAbstract
             );
         }
 
-        if (!is_writable($transformation->getTransformer()->getTarget())) {
+        if (!is_writable($this->getTransformer()->getTarget())) {
             throw new \phpDocumentor\Transformer\Exception(
                 'Unable to write to: ' . dirname($transformation->getArtifact())
             );
         }
 
-        $transformation->getTransformer()->copyRecursive(
+        $this->getTransformer()->copyRecursive(
             $path,
             $transformation->getArtifact()
         );

@@ -7,12 +7,16 @@ namespace phpDocumentor\Plugin\Core\Transformer\Writer;
 
 class FileIoTest extends \PHPUnit_Framework_TestCase
 {
+    /** @var \phpDocumentor\Transformer\Transformer */
+    public $transformer;
+
     /** @var FileIo */
     protected $fixture = null;
 
     protected function setUp()
     {
-        $this->fixture = new FileIo();
+        $this->transformer = new \phpDocumentor\Transformer\Transformer();
+        $this->fixture = new FileIo($this->transformer);
     }
 
     public function testExecuteQueryCopy()
@@ -22,12 +26,11 @@ class FileIoTest extends \PHPUnit_Framework_TestCase
         $this->assertFileExists('/tmp/phpdoc_a');
         $this->assertFileNotExists('/tmp/phpdoc_b');
 
-        $tr = new \phpDocumentor\Transformer\Transformer();
-        $tr->setTarget('/tmp');
+        $this->transformer->setTarget('/tmp');
         try
         {
             $t = new \phpDocumentor\Transformer\Transformation(
-                $tr, 'copy', 'FileIo', '/tmp/phpdoc_b', 'phpdoc_c'
+                'FileIo', '/tmp/phpdoc_b', 'phpdoc_c', 'copy'
             );
             $this->fixture->transform(new \DOMDocument(), $t);
 
@@ -46,9 +49,9 @@ class FileIoTest extends \PHPUnit_Framework_TestCase
 
         try
         {
-            $tr->setTarget('/tmpz');
+            $this->transformer->setTarget('/tmpz');
             $t = new \phpDocumentor\Transformer\Transformation(
-                $tr, 'copy', 'FileIo', '/tmp/phpdoc_a', 'phpdoc_b'
+                $this->transformer, 'copy', 'FileIo', '/tmp/phpdoc_a', 'phpdoc_b'
             );
             $this->fixture->transform(new \DOMDocument(), $t);
 
@@ -71,13 +74,6 @@ class FileIoTest extends \PHPUnit_Framework_TestCase
             .'the test code should be adapted'
         );
 
-//        $tr->setTarget('/tmp');
-//        $t = new \phpDocumentor\Transformer\Transformation(
-//            $tr, 'copy', 'FileIo', '/tmp/phpdoc_a', '/tmp/phpdoc_b'
-//        );
-//        $this->fixture->executeQueryCopy($t);
-//        $this->assertFileExists('/tmp/phpdoc_a');
-//        $this->assertFileExists('/tmp/phpdoc_b');
         unlink('/tmp/phpdoc_a');
         unlink('/tmp/phpdoc_b');
     }
@@ -94,7 +90,9 @@ class FileIoTest extends \PHPUnit_Framework_TestCase
 
         try
         {
-            $t = new \phpDocumentor\Transformer\Transformation($tr, 'copyz', 'FileIo', '/tmp/phpdoc_a', 'phpdoc_b');
+            $t = new \phpDocumentor\Transformer\Transformation(
+                'FileIo', '/tmp/phpdoc_a', 'phpdoc_b', 'copyz'
+            );
             $this->fixture->transform(new \DOMDocument(), $t);
 
             $this->fail('When un unknown query type is used an exception is expected');
@@ -108,10 +106,6 @@ class FileIoTest extends \PHPUnit_Framework_TestCase
             'Absolute files are no longer supported using the FileIo writer, '
             .'the test code should be adapted'
         );
-//       $t = new \phpDocumentor\Transformer\Transformation($tr, 'copy', 'FileIo', '/tmp/phpdoc_a', 'phpdoc_b');
-//        $this->fixture->transform(new DOMDocument(), $t);
-//        $this->assertFileExists('/tmp/phpdoc_a');
-//        $this->assertFileExists('/tmp/phpdoc_b');
         unlink('/tmp/phpdoc_a');
         unlink('/tmp/phpdoc_b');
     }

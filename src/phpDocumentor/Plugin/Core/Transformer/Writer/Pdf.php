@@ -49,12 +49,12 @@ class Pdf extends \phpDocumentor\Transformer\Writer\WriterAbstract
         \DOMDocument $structure,
         \phpDocumentor\Transformer\Transformation $transformation
     ) {
-        $artifact = $transformation->getTransformer()->getTarget()
+        $artifact = $this->getTransformer()->getTarget()
             . DIRECTORY_SEPARATOR . $transformation->getArtifact();
         $transformation->setArtifact($artifact);
 
         $source = substr($transformation->getSource(), 0, 1) != DIRECTORY_SEPARATOR
-                ? $transformation->getTransformer()->getTarget()
+                ? $this->getTransformer()->getTarget()
                       . DIRECTORY_SEPARATOR . $transformation->getSource()
                 : $transformation->getSource();
         $transformation->setSource($source);

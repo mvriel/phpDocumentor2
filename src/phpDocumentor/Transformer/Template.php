@@ -2,12 +2,10 @@
 /**
  * phpDocumentor
  *
- * PHP Version 5
+ * PHP Version 5.3
  *
- * @category  phpDocumentor
- * @package   Transformer
  * @author    Mike van Riel <mike.vanriel@naenius.com>
- * @copyright 2010-2011 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2012 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -17,17 +15,14 @@ namespace phpDocumentor\Transformer;
 /**
  * Model representing a loaded template.
  *
- * @category phpDocumentor
- * @package  Transformer
- * @author   Mike van Riel <mike.vanriel@naenius.com>
- * @license  http://www.opensource.org/licenses/mit-license.php MIT
- * @link     http://phpdoc.org
+ * @author  Mike van Riel <mike.vanriel@naenius.com>
+ * @license http://www.opensource.org/licenses/mit-license.php MIT
+ * @link    http://phpdoc.org
  */
-class Template extends TransformerAbstract
-    implements \ArrayAccess, \Countable, \Iterator
+class Template extends \ArrayObject
 {
     /** @var string Name for this template */
-    protected $name = null;
+    protected $name = '';
 
     /** @var string */
     protected $author = '';
@@ -35,29 +30,8 @@ class Template extends TransformerAbstract
     /** @var string */
     protected $version = '';
 
-    /** @var string */
-    protected $copyright = '';
-
-    /** @var string */
-    protected $path = '';
-
-    /** @var Transformation */
-    protected $transformations = array();
-
     /**
-     * Initializes this object with a name and optionally with contents.
-     *
-     * @param string $name Name for this template.
-     * @param string $path The location of the template on this server.
-     */
-    public function __construct($name, $path)
-    {
-        $this->name = $name;
-        $this->path = $path;
-    }
-
-    /**
-     * Name for this template.
+     * Returns the name for this template.
      *
      * @return string
      */
@@ -67,7 +41,21 @@ class Template extends TransformerAbstract
     }
 
     /**
-     * The name of the author of this template (optionally including mail
+     * Sets the name for this template.
+     *
+     * @param string $name
+     *
+     * @return Template
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Sets the name of the author of this template (optionally including mail
      * address).
      *
      * @param string $author Name of the author optionally including mail address
@@ -88,38 +76,6 @@ class Template extends TransformerAbstract
     public function getAuthor()
     {
         return $this->author;
-    }
-
-    /**
-     * Sets the copyright string for this template.
-     *
-     * @param string $copyright Free-form copyright notice.
-     *
-     * @return void
-     */
-    public function setCopyright($copyright)
-    {
-        $this->copyright = $copyright;
-    }
-
-    /**
-     * Returns the copyright string for this template.
-     *
-     * @return string
-     */
-    public function getCopyright()
-    {
-        return $this->copyright;
-    }
-
-    /**
-     * Returns the location of this template.
-     *
-     * @return string
-     */
-    public function getPath()
-    {
-        return $this->path;
     }
 
     /**
@@ -189,8 +145,22 @@ class Template extends TransformerAbstract
                 );
             }
 
-            $this->transformations[] = $transformation_obj;
+            $this->add($transformation_obj);
         }
+    }
+
+    /**
+     * Adds a new transformation to the template.
+     *
+     * @param Transformation $transformation
+     *
+     * @return Template
+     */
+    public function add(Transformation $transformation)
+    {
+        $this[] = $transformation;
+
+        return $this;
     }
 
     /**
@@ -211,121 +181,8 @@ class Template extends TransformerAbstract
             );
         }
 
-        $this->transformations[$offset] = $value;
+        parent::offsetSet($offset, $value);
     }
 
-    /**
-     * Gets the transformation at the given offset.
-     *
-     * @param integer|string $offset The offset to retrieve from.
-     *
-     * @return Transformation
-     */
-    function offsetGet($offset)
-    {
-        return $this->transformations[$offset];
-    }
-
-    /**
-     * Offset to unset.
-     *
-     * @param integer|string $offset Index of item to unset.
-     *
-     * @link http://php.net/manual/en/arrayaccess.offsetunset.php
-     *
-     * @return void
-     */
-    public function offsetUnset($offset)
-    {
-        unset($this->transformations[$offset]);
-    }
-
-    /**
-     * Whether a offset exists.
-     *
-     * @param mixed $offset An offset to check for.
-     *
-     * @link http://php.net/manual/en/arrayaccess.offsetexists.php
-     *
-     * @return boolean Returns true on success or false on failure.
-     */
-    public function offsetExists($offset)
-    {
-        return isset($this->transformations[$offset]);
-    }
-
-    /**
-     * Count the number of transformations.
-     *
-     * @link http://php.net/manual/en/countable.count.php
-     *
-     * @return int The count as an integer.
-     */
-    public function count()
-    {
-        return count($this->transformations);
-    }
-
-    /**
-     * Rewind the Iterator to the first element
-     *
-     * @link http://php.net/manual/en/iterator.rewind.php
-     *
-     * @return void
-     */
-    public function rewind()
-    {
-        reset($this->transformations);
-    }
-
-    /**
-     * Checks if current position is valid.
-     *
-     * @link http://php.net/manual/en/iterator.valid.php
-     *
-     * @return boolean Returns true on success or false on failure.
-     */
-    public function valid()
-    {
-        return (current($this->transformations) === false)
-            ? false
-            : true;
-    }
-
-    /**
-     * Return the key of the current element.
-     *
-     * @link http://php.net/manual/en/iterator.key.php
-     *
-     * @return int|string scalar on success, integer 0 on failure.
-     */
-    public function key()
-    {
-        key($this->transformations);
-    }
-
-    /**
-     * Move forward to next element.
-     *
-     * @link http://php.net/manual/en/iterator.next.php
-     *
-     * @return void Any returned value is ignored.
-     */
-    public function next()
-    {
-        next($this->transformations);
-    }
-
-    /**
-     * Return the current element.
-     *
-     * @link http://php.net/manual/en/iterator.current.php
-     *
-     * @return Transformation
-     */
-    public function current()
-    {
-        return current($this->transformations);
-    }
 
 }

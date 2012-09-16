@@ -43,10 +43,10 @@ class CheckstyleTest extends \PHPUnit_Framework_TestCase
     public function testTransformCanIdentifyParseMarkersAndCreateCheckstyleReport(
         $structure, $expected
     ) {
-        $tr = new \phpDocumentor\Transformer\Transformer();
-        $tr->setTarget('/tmp');
-        $t = new \phpDocumentor\Transformer\Transformation(
-            $tr, '', 'Checkstyle', '', '/checkstyle.xml'
+        $transformer = new \phpDocumentor\Transformer\Transformer();
+        $transformer->setTarget('/tmp');
+        $transformation = new \phpDocumentor\Transformer\Transformation(
+            'Checkstyle', '/checkstyle.xml', '', ''
         );
 
         $expectedDom = new \DOMDocument();
@@ -55,8 +55,8 @@ class CheckstyleTest extends \PHPUnit_Framework_TestCase
         $document = new \DOMDocument();
         $document->loadXML($structure);
 
-        $writer = new Checkstyle();
-        $writer->transform($document, $t);
+        $writer = new Checkstyle($transformer);
+        $writer->transform($document, $transformation);
 
         $this->assertFileExists('/tmp/checkstyle.xml');
         $actual = file_get_contents('/tmp/checkstyle.xml');

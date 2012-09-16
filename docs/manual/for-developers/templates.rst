@@ -34,9 +34,8 @@ file and pass that in the constructor using a Template Loader:
 
    use phpDocumentor\Transformer\Template;
 
-   $template = new Template(
-       Template\Loader\Xml('template.xml')
-   );
+   $reader = new Template\Reader\Xml(new Template());
+   $template = $reader->process(file_get_contents('template.xml'));
 
    // ... initialize $transformer ...
    $transformer->execute($template);

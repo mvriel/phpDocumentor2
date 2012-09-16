@@ -43,7 +43,7 @@ class Search extends \phpDocumentor\Transformer\Writer\WriterAbstract
     ) {
         $this->createXmlIndex(
             $structure,
-            $transformation->getTransformer()->getTarget() . DIRECTORY_SEPARATOR
+            $this->getTransformer()->getTarget() . DIRECTORY_SEPARATOR
             . $transformation->getArtifact()
         );
     }

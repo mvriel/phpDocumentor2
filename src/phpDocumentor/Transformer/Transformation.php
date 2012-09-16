@@ -40,52 +40,23 @@ class Transformation extends TransformerAbstract
     /** @var string[] */
     protected $parameters = array();
 
-    /** @var Transformer */
-    protected $transformer = null;
-
     /**
      * Constructs a new Transformation object and populates the required parameters.
      *
-     * @param Transformer $transformer The parent transformer.
-     * @param string      $query       What information to use as datasource for
+     * @param string $query       What information to use as datasource for
      *     the writer's source.
-     * @param string      $writer      What type of transformation to apply
+     * @param string $writer      What type of transformation to apply
      *     (XSLT, PDF, Checkstyle etc).
-     * @param string      $source      Which template or type of source to use.
-     * @param string      $artifact    What is the filename of the result
+     * @param string $source      Which template or type of source to use.
+     * @param string $artifact    What is the filename of the result
      *     (relative to the generated root)
      */
-    public function __construct(
-        Transformer $transformer, $query, $writer, $source, $artifact
+    public function __construct($writer, $source, $artifact, $query
     ) {
-        $this->setTransformer($transformer);
         $this->setQuery($query);
         $this->setWriter($writer);
         $this->setSource($source);
         $this->setArtifact($artifact);
-    }
-
-    /**
-     * Sets the transformer object responsible for maintaining the transformations.
-     *
-     * @param Transformer $transformer Responsible transformer object.
-     *
-     * @return void
-     */
-    public function setTransformer(Transformer $transformer)
-    {
-        $this->transformer = $transformer;
-    }
-
-    /**
-     * Returns the transformer object which is responsible for maintaining this
-     * transformation.
-     *
-     * @return Transformer
-     */
-    public function getTransformer()
-    {
-        return $this->transformer;
     }
 
     /**
@@ -119,7 +90,7 @@ class Transformation extends TransformerAbstract
      */
     public function setWriter($writer)
     {
-        $this->writer = Writer\WriterAbstract::getInstanceOf($writer);
+        $this->writer = $writer;
     }
 
     /**
@@ -236,39 +207,6 @@ class Transformation extends TransformerAbstract
     public function setParameters(array $parameters)
     {
         $this->parameters = $parameters;
-    }
-
-    /**
-     * Recursive function to convert a SimpleXMLElement to an associative array.
-     *
-     * @param \SimpleXMLElement $sxml object to convert to a flat array.
-     *
-     * @return (string|string[])[]
-     */
-    protected function convertSimpleXmlToArray(\SimpleXMLElement $sxml)
-    {
-        $result = array();
-
-        /** @var \SimpleXMLElement $value */
-        foreach ($sxml->children() as $key => $value) {
-            $result[$key] = count($value->children()) > 1
-                ? $this->convertSimpleXmlToArray($value)
-                : (string)$value;
-        }
-
-        return $result;
-    }
-
-    /**
-     * Imports the parameters from a SimpleXMLElement array.
-     *
-     * @param \SimpleXMLElement $parameters Object to import
-     *
-     * @return void
-     */
-    public function importParameters(\SimpleXMLElement $parameters)
-    {
-        $this->parameters = $this->convertSimpleXmlToArray($parameters);
     }
 
     /**

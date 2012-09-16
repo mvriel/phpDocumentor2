@@ -40,7 +40,7 @@ class Checkstyle extends \phpDocumentor\Transformer\Writer\WriterAbstract
     public function transform(\DOMDocument $structure,
         \phpDocumentor\Transformer\Transformation $transformation
     ) {
-        $artifact = $transformation->getTransformer()->getTarget()
+        $artifact = $this->getTransformer()->getTarget()
         . DIRECTORY_SEPARATOR . $transformation->getArtifact();
 
         $list = $structure->getElementsByTagName('parse_markers');

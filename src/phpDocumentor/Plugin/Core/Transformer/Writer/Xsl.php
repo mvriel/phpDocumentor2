@@ -52,7 +52,7 @@ class Xsl extends \phpDocumentor\Transformer\Writer\WriterAbstract
             );
         }
 
-        $artifact = $transformation->getTransformer()->getTarget()
+        $artifact = $this->getTransformer()->getTarget()
         . DIRECTORY_SEPARATOR . $transformation->getArtifact();
 
         $xsl = new \DOMDocument();
@@ -89,7 +89,7 @@ class Xsl extends \phpDocumentor\Transformer\Writer\WriterAbstract
         // location by replacing ($<var>} with the sluggified node-value of the
         // search result
         if ($transformation->getQuery() !== '') {
-            $xpath = new \DOMXPath($transformation->getTransformer()->getSource());
+            $xpath = new \DOMXPath($this->getTransformer()->getSource());
 
             /** @var \DOMNodeList $qry */
             $qry = $xpath->query($transformation->getQuery());
@@ -103,7 +103,7 @@ class Xsl extends \phpDocumentor\Transformer\Writer\WriterAbstract
                 );
 
                 $proc->setParameter('', $element->nodeName, $element->nodeValue);
-                $file_name = $transformation->getTransformer()->generateFilename(
+                $file_name = $this->getTransformer()->generateFilename(
                     $element->nodeValue
                 );
 
