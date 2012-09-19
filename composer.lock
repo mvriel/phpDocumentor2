@@ -1,5 +1,5 @@
 {
-    "hash": "ae3abb413081a372bfc8250abf2ec0e8",
+    "hash": "8e50cab372ee409039ef0d9c7d1c6253",
     "packages": [
         {
             "name": "cilex/cilex",
@@ -1012,7 +1012,7 @@
                 "behat/yii-extension": "for integration with Yii web framework",
                 "behat/mink-extension": "for integration with Mink testing framework"
             },
-            "time": "2012-09-04 04:59:18",
+            "time": "2012-09-04 02:59:18",
             "bin": [
                 "bin/behat"
             ],
@@ -1069,7 +1069,7 @@
                 "symfony/translation": "If you want to use Symfony2 translations adapter",
                 "symfony/config": "If you want to use Config component to manage resources"
             },
-            "time": "2012-08-03 03:25:15",
+            "time": "2012-08-03 01:25:15",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -1117,7 +1117,7 @@
             "suggest": {
                 "Hamcrest": "1.0.0"
             },
-            "time": "2012-01-24 20:22:39",
+            "time": "2012-01-24 19:22:39",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -1416,7 +1416,7 @@
                 "ext-simplexml": "*",
                 "ext-tokenizer": "*"
             },
-            "time": "2012-09-19 03:07:48",
+            "time": "2012-09-19 01:07:48",
             "bin": [
                 "composer/bin/phpunit"
             ],
