@@ -38,6 +38,7 @@ class Xml extends BaseReader
 
         $this->template->setAuthor((string)$xml->author);
         $this->template->setVersion((string)$xml->version);
+        $this->template->setParameters($parameters);
 
         $transformations = $this->getTransformations($xml);
         foreach ($transformations as $transformation) {
@@ -45,8 +46,7 @@ class Xml extends BaseReader
 
             $transformation_obj->setParameters(
                 array_merge_recursive(
-                    $parameters,
-                    $this->getParameters($transformation)
+                    $parameters, $this->getParameters($transformation)
                 )
             );
 

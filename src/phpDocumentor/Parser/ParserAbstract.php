@@ -11,9 +11,9 @@
  */
 namespace phpDocumentor\Parser;
 
-use phpDocumentor\Plugin\EventDispatcher;
-use phpDocumentor\Events\LogEvent;
-use phpDocumentor\Events\DebugEvent;
+use phpDocumentor\Event\Dispatcher;
+use phpDocumentor\Event\LogEvent;
+use phpDocumentor\Event\DebugEvent;
 
 /**
  * Layer superclass for \phpDocumentor\Parser Component.
@@ -31,7 +31,7 @@ abstract class ParserAbstract
      */
     public function log($message, $priority = 6)
     {
-        EventDispatcher::getInstance()->dispatch(
+        Dispatcher::getInstance()->dispatch(
             'system.log',
             LogEvent::createInstance($this)
                 ->setMessage($message)
@@ -48,7 +48,7 @@ abstract class ParserAbstract
      */
     public function debug($message)
     {
-        EventDispatcher::getInstance()->dispatch(
+        Dispatcher::getInstance()->dispatch(
             'system.debug',
             DebugEvent::createInstance($this)->setMessage($message)
         );

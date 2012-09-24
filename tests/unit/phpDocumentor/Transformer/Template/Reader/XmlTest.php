@@ -173,7 +173,10 @@ XML;
     public function testProcessConfigurationStringWithAParameter()
     {
         /** @var \PHPUnit_Framework_MockObject_MockObject|Template $template  */
-        $template = $this->getMock('phpDocumentor\Transformer\Template', array('setAuthor', 'setVersion', 'setName'));
+        $template = $this->getMock(
+            'phpDocumentor\Transformer\Template',
+            array('setAuthor', 'setVersion', 'setName')
+        );
         $template->expects($this->never())->method('add');
 
         $fixture = <<<XML
@@ -201,6 +204,10 @@ XML;
         $this->assertEquals(
             array('my' => 'parameter'),
             $template->getParameters()
+        );
+        $this->assertEquals(
+            array('my' => 'parameter'),
+            $template[0]->getParameters()
         );
     }
 }

@@ -30,6 +30,9 @@ class Template extends \ArrayObject
     /** @var string */
     protected $version = '';
 
+    /** @var string[] */
+    protected $parameters = array();
+
     /**
      * Returns the name for this template.
      *
@@ -184,5 +187,27 @@ class Template extends \ArrayObject
         parent::offsetSet($offset, $value);
     }
 
+    /**
+     * Sets an associative array representing parameters for this template.
+     *
+     * @param string[] $parameters
+     *
+     * @return $this
+     */
+    public function setParameters(array $parameters)
+    {
+        $this->parameters = $parameters;
 
+        return $this;
+    }
+
+    /**
+     * Returns a list of parameters as key value pairs.
+     *
+     * @return string[]
+     */
+    public function getParameters()
+    {
+        return $this->parameters;
+    }
 }
