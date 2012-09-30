@@ -310,21 +310,20 @@ class Definition extends ParserAbstract
                 continue;
             }
 
-            $type = trim($this->expandType($type));
-
-            // strip ampersands
-            $name = str_replace('&', '', $type);
-            $type_object = $this->xml->addChild('type', $name);
+            $expanded_type = trim($this->expandType(str_replace('&', '', $type)));
+            $type_object = $this->xml->addChild('type', $expanded_type);
 
             // register whether this variable is by reference by checking
             // the first and last character
             $type_object['by_reference'] = ((substr($type, 0, 1) === '&')
-                                            || (substr($type, -1) === '&'))
-                    ? 'true'
-                    : 'false';
+                || (substr($type, -1) === '&'))
+                ? 'true'
+                : 'false';
         }
 
-        $this->xml['type'] = $this->expandType($this->tag->getType());
+        $this->xml['type'] = $this->expandType(
+            str_replace('&', '', $this->tag->getType())
+        );
     }
 
     /**
