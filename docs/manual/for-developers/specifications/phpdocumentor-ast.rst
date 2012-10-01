@@ -130,7 +130,7 @@ The following example shows a simple PHP Project definition:
 
    <?xml version="1.0" encoding="utf-8"?>
    <project title="My Documentation" version="1.1">
-       <namespace><name type="abbreviated">My</namespace></namespace>
+       <namespace><name type="abbreviated">My</name></namespace>
        <file name="my/file.php" hash="ecbf63efefa9dda668e39eb3c99c46f6"></file>
        <index name="namespace"></index>
    </project>
@@ -242,7 +242,7 @@ Attribute Definitions
     An example can be `package`, where each index item represents a package.
 
 `count`="<integer>"class
-    If this index item represents a collection of other items than this
+    If this index item represents a collection of other items then this
     attribute may be present indicating how many sub-items are present in the
     PDAST.
     An example of this may be an index of type `marker`, where the 'count'
