@@ -375,3 +375,11 @@ div.related
     background: transparent;
     color:      #333;
 }
+
+div.admonition
+{
+    background-color: #F4F4F4;
+    border-radius:    5px;
+    border:           1px solid #CCC;
+    margin-left:      20px;
+}
