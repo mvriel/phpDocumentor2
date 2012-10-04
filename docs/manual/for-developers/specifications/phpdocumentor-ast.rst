@@ -162,8 +162,24 @@ Overview
 A namespace is a syntactical container for other syntactical elements, even
 other namespaces.
 
+For the namespace MUST both the name with type 'abbreviation' and 'full' be
+provided since these may be used for query and display purposes. The 'full' name
+represents the complete Fully Qualified Namespace Name (FQNN) including the
+prefixing backslash ('\').
+
 Example
 #######
+
+.. code-block:: xml
+
+    <?xml version="1.0" encoding="utf-8" ?>
+    <project>
+        <namespace>
+            <name type="abbreviation">My</name>
+            <name type="full">\My</name>
+            ...
+        </namespace>
+    </project>
 
 Files: The 'file' element
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -181,21 +197,17 @@ Files: The 'file' element
 
        Any number of the following elements, in any order:
 
+       | 'name_'
        | 'namespace_alias_'
        | 'include_'
        | 'error_'
        | 'marker_'
 
    Attributes:
-       | 'name'
        | 'hash'
 
 Attribute Definitions
 #####################
-
-`name`="<Path_>"
-    The full path for the given file relative to the PHP Project's root
-    directory.
 
 `hash`="<integer_>"
     A MD5 hash of the entire contents of the file. With this hash it is possible
@@ -207,8 +219,30 @@ Attribute Definitions
 Overview
 ########
 
+A file is a representation of the files included in the processed PHP Project.
+These files may have additional data associated with them that allows parsers to
+interpret these files or transformers to query them.
+
+Top level elements such as Classes, Interfaces, Traits, global Functions and
+global Constants can have a filename associated with them matching the 'full'
+name of a file.
+
+Files can also contain error elements that represent errors and warnings; these
+error elements match the xml namespace and format of the checkstyle application.
+
 Example
 #######
+
+.. code-block:: xml
+
+    <?xml version="1.0" encoding="utf-8" ?>
+    <project>
+        <file hash="876487623874ccdde3629898">
+            <name type="full">/my/script.php</name>
+            <name type="abbreviation">script.php</name>
+            <description type="short">This is a short description</copyright>
+            <copyright>2012 phpDocumentor</copyright>
+        </file>
 
 .. _index:
 
@@ -223,19 +257,15 @@ The 'index' element
    Content model:
        Any number of the following elements, in any order:
 
+       | 'name_'
        | 'index_'
 
    Attributes:
-       | 'name'
        | 'type'
        | 'count'
-       | 'path'
 
 Attribute Definitions
 #####################
-
-`name`="<string>"
-    A string representing the name of this index item.
 
 `type`="<string>"
     A string representing which type of elements are contained inside this index.
@@ -249,14 +279,47 @@ Attribute Definitions
     attribute represents how many markers with the same name are present in
     the source code.
 
-`path`="<string>"
-
-
 Overview
 ########
 
+An index can represent any kind of aggregated information that can serve to
+simplify the transformation process.
+
+A concrete example of an index can be for a tree of the 'package' elements
+defined in this application. Each index may in turn contain other index elements
+so that a tree can be built.
+
+In some cases it is convenient to keep a score of how many times an item
+represented by the index has occurred. Keeping track of this in the 'count'
+attribute helps to improve performance.
+
+A concrete example of the above can be a list of the markers where the count
+indicates how often a specific marker has occurred in the code.
+
 Example
 #######
+
+.. code-block:: xml
+
+    <?xml version="1.0" encoding="utf-8" ?>
+    <project>
+        <index type="package">
+            <name type="abbreviation">My</name>
+            <name type="full">\My</name>
+            <index type="package">
+                <name type="abbreviation">Package</name>
+                <name type="full">\My\Package</name>
+            </index>
+        </index>
+    </project>
+
+.. code-block:: xml
+
+    <?xml version="1.0" encoding="utf-8" ?>
+    <project>
+        <index type="marker" count="0"><name type="full">TODO</name></index>
+        <index type="marker" count="0"><name type="full">FIXME</name></index>
+    </project>
 
 .. _source:
 
@@ -274,14 +337,30 @@ The 'source' element
    Attributes:
        None
 
-Attribute Definitions
-#####################
-
 Overview
 ########
 
+    The content of the 'source' element represents the source code for the
+    parent element. This element can only be used in a syntactical element.
+
+    The character data is base64 encoded binary data that is compressed using
+    the gcompress function of PHP. This means that the data is technically valid
+    gzip data but lacks a header.
+
 Example
 #######
+
+.. code-block:: xml
+
+    <?xml version="1.0" encoding="utf-8" ?>
+    <project>
+        <file>
+            ...
+            <source><[CDATA[[eJyzsS/IKODS19LiUtBSCMnILFYAokSF4oz8ohKFlNTi5KLMgpL
+M/Dw9oDyqkpz8vHRsKhwKEosScxVigjNzC3JSI3x9XHNSc1PzSqJjFVRKUotLYMqKUktKi/IUyvIzU4B
+8fa600rxkkDkKIEUaYKWaXNVcCkDAVcsFABEUM1M=]]></source>
+        </file>
+    </project>
 
 .. _DocBlock:
 
@@ -311,12 +390,26 @@ The 'class' element
    Attributes:
        | 'final'
        | 'abstract'
+       | 'file'
        | 'line_number'
-       | 'package'
-       | 'namespace'
 
 Attribute Definitions
 #####################
+
+`final`="<boolean>"
+    Declares whether the elements represents a class with the 'final' modifier.
+
+`abstract`="<boolean>"
+    Declares whether the elements represents a class with the 'abstract'
+    modifier.
+
+`file`="<string>"
+    String containing the full path name for the file that contains this class.
+    The given path is relative to the Project's Root.
+
+`line_number`="<integer>"
+    Number defining on which line of the file provided in the 'file' attribute
+    the represented class begins.
 
 Overview
 ########
@@ -707,7 +800,7 @@ Example
 
    <?xml version="1.0" encoding="utf-8"?>
 
-   <project title="Example">
+   <project title="Example" xmlns="http://phpdoc.org/ns/pdast" version="1.1">
        <namespace>
            <name type="abbreviation">My</name>
            <name type="full">\My</name>
