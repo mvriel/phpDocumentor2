@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<project
+    xmlns="http://phpdoc.org/ns/pdast"
+    xmlns:docbook="http://docbook.org/ns/docbook"
+    xmlns:checkstyle="antlib:com.puppycrawl.tools.checkstyle"
+>
+    <namespace>
+        <name type="abbreviation">phpDocumentor</name>
+        <name type="full">\phpDocumentor</name>
+        <function line_number="229">
+            <name type="abbreviation">findAutoloader</name>
+            <name type="full">\phpDocumentor\findAutoloader</name>
+            <description type="short">
+                <docbook:para>Tries to find the autoloader relative to this file and return its path.</docbook:para>
+            </description>
+            <throws>
+                <description type="long">
+                    <docbook:para>if the autoloader could not be found.</docbook:para>
+                </description>
+                <type>\RuntimeException</type>
+            </throws>
+            <return>
+                <description>
+                    <docbook:para>the path of the autoloader.</docbook:para>
+                </description>
+                <type>string</type>
+            </return>
+        </function>
+        <class final="false" abstract="false" line_number="31">
+            <name type="abbreviation">Application</name>
+            <name type="full">\phpDocumentor\Application</name>
+            <description type="short">
+                <docbook:para>Application class for phpDocumentor.</docbook:para>
+            </description>
+            <description type="long">
+                <docbook:para>Can be used as bootstrap when the run method is not invoked.</docbook:para>
+            </description>
+            <constant line_number="33">
+                <name type="abbreviation">VERSION</name>
+                <name type="full">\phpDocumentor\Application::VERSION</name>
+                <type>string</type>
+                <value><![CDATA[2.0.0a11]]></value>
+            </constant>
+            <method final="false" abstract="false" static="false" visibility="public" line_number="38">
+                <name type="abbreviation">__construct</name>
+                <name type="full">\phpDocumentor\Application::__construct</name>
+                <description type="short">
+                    <docbook:para>Initializes all components used by phpDocumentor.</docbook:para>
+                </description>
+                <return><type>void</type></return>
+            </method>
+            <method final="false" abstract="false" static="false" visibility="public" line_number="65">
+                <name type="abbreviation">run</name>
+                <name type="full">\phpDocumentor\Application::run</name>
+                <description type="short">
+                    <docbook:para>Run the application and if no command is provided, use project:run.</docbook:para>
+                </description>
+                <argument by_reference="false">
+                    <name type="abbreviation">interactive</name>
+                    <description type="long">
+                        <docbook:para>Whether to run in interactive mode.</docbook:para>
+                    </description>
+                    <type>boolean</type>
+                    <default><![CDATA[false]]></default>
+                </argument>
+                <return><type>void</type></return>
+            </method>
+            <method final="false" abstract="false" static="false" visibility="protected" line_number="80">
+                <name type="abbreviation">addCommandsForProjectNamespace</name>
+                <name type="full">\phpDocumentor\Application::addCommandsForProjectNamespace</name>
+                <description type="short">
+                    <docbook:para>Adds the command to phpDocumentor that belong to the Project namespace.</docbook:para>
+                </description>
+                <return><type>void</type></return>
+            </method>
+            <method final="false" abstract="false" static="false" visibility="protected" line_number="92">
+                <name type="abbreviation">addCommandsForPluginNamespace</name>
+                <name type="full">\phpDocumentor\Application::addCommandsForTemplateNamespace</name>
+                <description type="short">
+                    <docbook:para>Adds the command to phpDocumentor that belong to the Template namespace.</docbook:para>
+                </description>
+                <return><type>void</type></return>
+            </method>
+        </class>
+    </namespace>
+    <file hash="67fd7ce5fb604d9786eb181508074cc9">
+        <name type="abbreviation">Application.php</name>
+        <name type="full">/Application.php</name>
+        <description type="short">
+            <docbook:para>phpDocumentor</docbook:para>
+        </description>
+        <description type="long">
+            <docbook:para>PHP Version 5.3</docbook:para>
+        </description>
+        <author email="mike.vanriel@naenius.com">Mike van Riel</author>
+        <copyright>2010-2011 Mike van Riel / Naenius (http://www.naenius.com)</copyright>
+        <license url="http://www.opensource.org/licenses/mit-license.php">MIT</license>
+        <see url="http://www.phpdoc.org">http://www.phpdoc.org</see>
+        <namespace-alias name="InputInterface">\Symfony\Component\Console\Input\InputInterface</namespace-alias>
+        <include type="require_once" line_number="18">
+            <path>findAutoloader()</path>
+            <description type="short">
+                <docbook:para>Finds and activates the autoloader.</docbook:para>
+            </description>
+        </include>
+        <include type="include" line_number="116">
+            <path>findAutoloader()</path>
+            <description type="short">
+                <docbook:para>Finds and activates the autoloader.</docbook:para>
+            </description>
+        </include>
+        <checkstyle:error line="29" severity="error"
+            message="No page-level DocBlock was found in"
+            source="org.phpdoc.checkstyle.checks.50007" />
+        <source><![CDATA[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]]></source>
+    </file>
+</project>
