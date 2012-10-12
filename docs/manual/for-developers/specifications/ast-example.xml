@@ -21,7 +21,7 @@
                 <type>\RuntimeException</type>
             </throws>
             <return>
-                <description>
+                <description type="long">
                     <docbook:para>the path of the autoloader.</docbook:para>
                 </description>
                 <type>string</type>
@@ -93,11 +93,24 @@
         <description type="long">
             <docbook:para>PHP Version 5.3</docbook:para>
         </description>
-        <author email="mike.vanriel@naenius.com">Mike van Riel</author>
+        <author>
+            <name type="full">Mike van Riel</name>
+            <email>mike.vanriel@naenius.com</email>
+            <uri>http://phpdoc.org</uri>
+        </author>
         <copyright>2010-2011 Mike van Riel / Naenius (http://www.naenius.com)</copyright>
-        <license url="http://www.opensource.org/licenses/mit-license.php">MIT</license>
-        <see url="http://www.phpdoc.org">http://www.phpdoc.org</see>
-        <namespace-alias name="InputInterface">\Symfony\Component\Console\Input\InputInterface</namespace-alias>
+        <license>
+            <name type="abbreviation">MIT</name>
+            <uri>http://www.opensource.org/licenses/mit-license.php</uri>
+        </license>
+        <see>
+            <name type="full">http://www.phpdoc.org</name>
+            <uri>http://www.phpdoc.org</uri>
+        </see>
+        <namespace-alias>
+            <name type="abbreviation">InputInterface</name>
+            <name type="full">\Symfony\Component\Console\Input\InputInterface</name>
+        </namespace-alias>
         <include type="require_once" line_number="18">
             <path>findAutoloader()</path>
             <description type="short">
