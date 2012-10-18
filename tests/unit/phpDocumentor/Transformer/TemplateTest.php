@@ -111,9 +111,11 @@ class TemplateTest extends \PHPUnit_Framework_TestCase
         $template[] = $transformation;
 
         $this->assertEquals(1, $template->count());
+        $this->assertSame($transformation, $template[0]);
 
         $template->add($transformation);
 
         $this->assertEquals(2, $template->count());
+        $this->assertSame($transformation, $template[1]);
     }
 }

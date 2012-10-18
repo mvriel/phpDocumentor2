@@ -103,11 +103,12 @@ TEXT
 
         $output->write('Initializing transformer ..');
 
+        $template_factory = new \phpDocumentor\Transformer\Template\Factory();
         // initialize transformer
-        $transformer = new \phpDocumentor\Transformer\Transformer();
-        $transformer->setTemplatesPath(
-            __DIR__.'/../../../../data/templates'
+        $transformer = new \phpDocumentor\Transformer\Transformer(
+            $template_factory
         );
+        $template_factory->setPath(__DIR__.'/../../../../data/templates');
 
         $target = $this->getOption($input, 'target', 'transformer/target');
         if (!$this->isAbsolute($target)) {

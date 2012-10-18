@@ -14,6 +14,11 @@
 
 namespace phpDocumentor\Transformer;
 
+use phpDocumentor\Transformer\Template\Factory;
+use phpDocumentor\Event\Dispatcher;
+use phpDocumentor\Transformer\Event\PreTransformationEvent;
+use phpDocumentor\Transformer\Event\PostTransformationEvent;
+
 /**
  * Core class responsible for transforming the structure.xml file to a set of
  * artifacts.
@@ -35,10 +40,10 @@ class Transformer extends TransformerAbstract
     /** @var \phpDocumentor\Transformer\Template[] */
     protected $templates = array();
 
-    /** @var string */
-    protected $templates_path = '';
+    /** @var Factory */
+    protected $template_factory;
 
-    /** @var \phpDocumentor\Plugin\Core\Transformer\Behaviour\Collection */
+    /** @var Behaviour\Collection */
     protected $behaviours = null;
 
     /** @var Transformation[] */
@@ -65,8 +70,9 @@ class Transformer extends TransformerAbstract
     /**
      * Sets the path for the templates to the phpDocumentor default.
      */
-    public function __construct()
+    public function __construct(Factory $template_factory)
     {
+        $this->template_factory = $template_factory;
     }
 
     /**
@@ -100,28 +106,6 @@ class Transformer extends TransformerAbstract
     public function getTarget()
     {
         return $this->target;
-    }
-
-    /**
-     * Sets the path where the templates are located.
-     *
-     * @param string $path Absolute path where the templates are.
-     *
-     * @return void
-     */
-    public function setTemplatesPath($path)
-    {
-        $this->templates_path = $path;
-    }
-
-    /**
-     * Returns the path where the templates are located.
-     *
-     * @return string
-     */
-    public function getTemplatesPath()
-    {
-        return $this->templates_path;
     }
 
     /**
@@ -233,59 +217,7 @@ class Transformer extends TransformerAbstract
      */
     public function addTemplate($name)
     {
-        // if the template is already loaded we do not reload it.
-        if (isset($this->templates[$name])) {
-            return;
-        }
-
-        $path = null;
-
-        // if this is an absolute path; load the template into the configuration
-        // Please note that this _could_ override an existing template when
-        // you have a template in a subfolder with the same name as a default
-        // template; we have left this in on purpose to allow people to override
-        // templates should they choose to.
-        $config_path = rtrim($name, DIRECTORY_SEPARATOR) . '/template.xml';
-        if (file_exists($config_path) && is_readable($config_path)) {
-            $path = rtrim($name, DIRECTORY_SEPARATOR);
-            $template_name_part = basename($path);
-            $cache_path = rtrim($this->getTemplatesPath(), '/\\')
-            . DIRECTORY_SEPARATOR . $template_name_part;
-
-            // move the files to a cache location and then change the path
-            // variable to match the new location
-            $this->copyRecursive($path, $cache_path);
-            $path = $cache_path;
-
-            // transform all directory separators to underscores and lowercase
-            $name = strtolower(
-                str_replace(
-                    DIRECTORY_SEPARATOR,
-                    '_',
-                    rtrim($name, DIRECTORY_SEPARATOR)
-                )
-            );
-        }
-
-        // if we load a default template
-        if ($path === null) {
-            $path = rtrim($this->getTemplatesPath(), '/\\')
-                    . DIRECTORY_SEPARATOR . $name;
-        }
-
-        if (!file_exists($path) || !is_readable($path)) {
-            throw new \InvalidArgumentException(
-                'The given template ' . $name.' could not be found or is not '
-                . 'readable'
-            );
-        }
-
-        // track templates to be able to refer to them later
-        $this->templates[$name] = new Template($name, $path);
-        $this->templates[$name]->populate(
-            $this,
-            file_get_contents($path  . DIRECTORY_SEPARATOR . 'template.xml')
-        );
+        $this->templates[$name] = $this->template_factory->getTemplate($name);
     }
 
     /**
@@ -307,6 +239,8 @@ class Transformer extends TransformerAbstract
 
     /**
      * Executes each transformation.
+     *
+     * @throws Exception if the Source is not set
      *
      * @return void
      */
@@ -330,33 +264,47 @@ class Transformer extends TransformerAbstract
         );
 
         foreach ($this->getTransformations() as $transformation) {
-            \phpDocumentor\Event\Dispatcher::getInstance()->dispatch(
-                'transformer.transformation.pre',
-                \phpDocumentor\Transformer\Event\PreTransformationEvent
-                ::createInstance($this)->setSource($source)
-            );
-
-            $this->log(
-                'Applying transformation'
-                . ($transformation->getQuery()
-                        ? (' query "' . $transformation->getQuery() . '"') : '')
-                . ' using writer ' . get_class($transformation->getWriter())
-                . ' on '.$transformation->getArtifact()
-            );
-
-            $transformation->execute($source);
-
-            \phpDocumentor\Event\Dispatcher::getInstance()->dispatch(
-                'transformer.transformation.post',
-                \phpDocumentor\Transformer\Event\PostTransformationEvent
-                ::createInstance($this)->setSource($source)
-            );
+            $this->applyTransformation($source, $transformation);
         }
 
         \phpDocumentor\Event\Dispatcher::getInstance()->dispatch(
             'transformer.transform.post',
             \phpDocumentor\Transformer\Event\PostTransformEvent
             ::createInstance($this)->setSource($source)
+        );
+    }
+
+    /**
+     * Applies a transformation to the given source.
+     *
+     * @param \DOMDocument   $source
+     * @param Transformation $transformation
+     *
+     * @return void
+     */
+    protected function applyTransformation(
+        \DOMDocument $source, Transformation $transformation
+    ) {
+        Dispatcher::getInstance()->dispatch(
+            'transformer.transformation.pre',
+            PreTransformationEvent::createInstance($this)->setSource($source)
+        );
+
+        $factory = new \phpDocumentor\Transformer\Writer\Factory($this);
+        $transformation->setWriter($factory->get($transformation->getWriter()));
+
+        $this->log(
+            'Applying transformation' . ($transformation->getQuery()
+                ? (' query "' . $transformation->getQuery() . '"') : '')
+                . ' using writer ' . get_class($transformation->getWriter())
+                . ' on ' . $transformation->getArtifact()
+        );
+
+        $transformation->execute($source);
+
+        Dispatcher::getInstance()->dispatch(
+            'transformer.transformation.post',
+            PostTransformationEvent::createInstance($this)->setSource($source)
         );
     }
 

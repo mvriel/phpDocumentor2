@@ -14,8 +14,8 @@ namespace phpDocumentor\Parser;
 
 use phpDocumentor\Reflection\FileReflector;
 use phpDocumentor\Fileset\Collection;
-use phpDocumentor\Plugin\EventDispatcher;
-use phpDocumentor\Parser\Events\PreFileEvent;
+use phpDocumentor\Event\Dispatcher;
+use phpDocumentor\Parser\Event\PreFileEvent;
 
 /**
  * Class responsible for parsing the given file or files to the intermediate
@@ -465,7 +465,7 @@ class Parser extends ParserAbstract
 
         $file_count = count($paths);
         foreach ($paths as $key => $file) {
-            EventDispatcher::getInstance()->dispatch(
+            Dispatcher::getInstance()->dispatch(
                 'parser.file.pre',
                 PreFileEvent::createInstance($this)->setFile($file)
             );
