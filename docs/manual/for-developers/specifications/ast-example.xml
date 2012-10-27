@@ -8,7 +8,7 @@
     <namespace>
         <name type="abbreviation">phpDocumentor</name>
         <name type="full">\phpDocumentor</name>
-        <function line_number="229">
+        <function line_number="229" filename="/Application.php">
             <name type="abbreviation">findAutoloader</name>
             <name type="full">\phpDocumentor\findAutoloader</name>
             <description type="short">
@@ -27,7 +27,7 @@
                 <type>string</type>
             </return>
         </function>
-        <class final="false" abstract="false" line_number="31">
+        <class final="false" abstract="false" line_number="31" filename="/Application.php">
             <name type="abbreviation">Application</name>
             <name type="full">\phpDocumentor\Application</name>
             <description type="short">

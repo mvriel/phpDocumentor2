@@ -29,7 +29,7 @@ The Mime Type (or Internet Media Type) for this document is
 the *prs* prefix. This Mime Type is not officially registered at IANA.
 
 It is recommended that AST files for phpDocumentor have the extension
-"`.pdast.xml`".
+"``.pdast.xml``".
 
 Compatibility with Other Standards Efforts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,7 +97,7 @@ Defining a PHP Project: the 'project' element
        | 'index_'
 
    Attributes:
-       | 'title'code-
+       | 'title'
        | 'version'
 
 Attribute Definitions
@@ -112,14 +112,16 @@ Attribute Definitions
 Overview
 ########
 
-A PHP Project consists of a number of `namespace` elements and optionally a
-number of `index` elements, contained within a `project` element.
+A PHP Project consists of a number of `namespace` elements, a number of `file`
+elements equal to the number of files in this PHP Project, and optionally a
+number of `index` elements; contained within a `project` element.
 
 A PHP Project may simply be an empty project, contain a single namespace and
 file or have an extensive set of namespaces and files together with indices.
 
-This element represents the container for a project and as such has all files
-and indexes, which in turn contain all other syntactical elements.
+This element represents the container for a project and as such has all
+namespaces, files and indexes, which in turn contain all other syntactical
+elements.
 
 Example
 #######
@@ -132,13 +134,14 @@ The following example shows a simple PHP Project definition:
    <project title="My Documentation" version="1.1">
        <namespace><name type="abbreviated">My</name></namespace>
        <file name="my/file.php" hash="ecbf63efefa9dda668e39eb3c99c46f6"></file>
-       <index name="namespace"></index>
+       <index type="marker" count="2"><name type="full">TODO</name></index>
    </project>
 
 .. _file:
 
 Namespaces: The 'namespace' element
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. admonition:: Definition
 
    Categories:
@@ -162,9 +165,9 @@ Overview
 A namespace is a syntactical container for other syntactical elements, even
 other namespaces.
 
-For the namespace MUST both the name with type 'abbreviation' and 'full' be
-provided since these may be used for query and display purposes. The 'full' name
-represents the complete Fully Qualified Namespace Name (FQNN) including the
+In the namespace MUST both the name with type 'abbreviation' and 'full' be
+provided, since these may be used for query and display purposes. The 'full'
+name represents the complete Fully Qualified Namespace Name (FQNN) including the
 prefixing backslash ('\').
 
 Example
@@ -200,8 +203,9 @@ Files: The 'file' element
        | 'name_'
        | 'namespace_alias_'
        | 'include_'
-       | 'error_'
+       | '`checkstyle:error`_'
        | 'marker_'
+       | 'source_'
 
    Attributes:
        | 'hash'
@@ -219,13 +223,13 @@ Attribute Definitions
 Overview
 ########
 
-A file is a representation of the files included in the processed PHP Project.
-These files may have additional data associated with them that allows parsers to
-interpret these files or transformers to query them.
+A file is a representation of one of the files included in the processed PHP
+Project. These files may have additional data associated with them that allows
+parsers to interpret these files or transformers to query them.
 
 Top level elements such as Classes, Interfaces, Traits, global Functions and
-global Constants can have a filename associated with them matching the 'full'
-name of a file.
+global Constants can have a filename attribute associated with them matching
+the 'full' name of a file.
 
 Files can also contain error elements that represent errors and warnings; these
 error elements match the xml namespace and format of the checkstyle application.
@@ -340,12 +344,12 @@ The 'source' element
 Overview
 ########
 
-    The content of the 'source' element represents the source code for the
-    parent element. This element can only be used in a syntactical element.
+The contents of the 'source' element represent the source code for the parent
+element. This element can only be used in a syntactical element.
 
-    The character data is base64 encoded binary data that is compressed using
-    the gcompress function of PHP. This means that the data is technically valid
-    gzip data but lacks a header.
+The character data is base64 encoded binary data that is compressed using the
+gcompress function of PHP. This means that the data is technically valid gzip
+data but lacks a header.
 
 Example
 #######
@@ -362,7 +366,7 @@ M/Dw9oDyqkpz8vHRsKhwKEosScxVigjNzC3JSI3x9XHNSc1PzSqJjFVRKUotLYMqKUktKi/IUyvIzU4B
         </file>
     </project>
 
-.. _DocBlock:
+.. _Class:
 
 The 'class' element
 ~~~~~~~~~~~~~~~~~~~
@@ -390,7 +394,7 @@ The 'class' element
    Attributes:
        | 'final'
        | 'abstract'
-       | 'file'
+       | 'filename'
        | 'line_number'
 
 Attribute Definitions
@@ -403,19 +407,49 @@ Attribute Definitions
     Declares whether the elements represents a class with the 'abstract'
     modifier.
 
-`file`="<string>"
+`filename`="<string>"
     String containing the full path name for the file that contains this class.
     The given path is relative to the Project's Root.
 
 `line_number`="<integer>"
-    Number defining on which line of the file provided in the 'file' attribute
-    the represented class begins.
+    Number defining on which line of the file provided in the 'filename'
+    attribute the represented class begins.
 
 Overview
 ########
 
+The contents of the 'class' element represent the definition for a specific
+class as indicated in the 'name' element; where the type 'full' represents the
+Fully Qualified Class Name (FCQN) including prefixing backslash.
+
 Example
 #######
+
+.. code-block:: xml
+
+    <?xml version="1.0" encoding="utf-8" ?>
+    <project>
+        <file>
+            ...
+            <class final="false" abstract="false" line_number="31"
+                filename="/Application.php"
+            >
+                <name type="abbreviation">Application</name>
+                <name type="full">\phpDocumentor\Application</name>
+                <description type="short">
+                    <docbook:para>
+                        Application class for phpDocumentor.
+                    </docbook:para>
+                </description>
+                <description type="long">
+                    <docbook:para>
+                        Can be used as bootstrap when the run method is not
+                        invoked.
+                    </docbook:para>
+                </description>
+            </class>
+        </file>
+    </project>
 
 .. _interface:
 
@@ -441,12 +475,19 @@ The 'interface' element
        | 'method_'
 
    Attributes:
+       | 'filename'
        | 'line_number'
-       | 'package'
-       | 'namespace'
 
 Attribute Definitions
 #####################
+
+`filename`="<string>"
+    String containing the full path name for the file that contains this
+    interface. The given path is relative to the Project's Root.
+
+`line_number`="<integer>"
+    Number defining on which line of the file provided in the 'filename'
+    attribute the represented class begins.
 
 Overview
 ########
@@ -483,6 +524,18 @@ The 'property' element
 Attribute Definitions
 #####################
 
+`final`="<boolean>"
+    Declares whether the elements represents a property with the 'final'
+    modifier.
+
+`static`="<boolean>"
+    Declares whether the elements represents a property with the 'static'
+    modifier.
+
+`line_number`="<integer>"
+    Number defining on which line of the file provided in the parents'
+    'filename' attribute the represented property begins.
+
 Overview
 ########
 
@@ -518,6 +571,22 @@ The 'method' element
 
 Attribute Definitions
 #####################
+
+`final`="<boolean>"
+    Declares whether the elements represents a method with the 'final'
+    modifier.
+
+`abstract`="<boolean>"
+    Declares whether the elements represents a method with the 'abstract'
+    modifier.
+
+`static`="<boolean>"
+    Declares whether the elements represents a method with the 'static'
+    modifier.
+
+`line_number`="<integer>"
+    Number defining on which line of the file provided in the parents'
+    'filename' attribute the represented method begins.
 
 Overview
 ########
