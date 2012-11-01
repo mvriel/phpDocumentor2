@@ -5,12 +5,13 @@
     xmlns:docbook="http://docbook.org/ns/docbook"
     xmlns:checkstyle="antlib:com.puppycrawl.tools.checkstyle"
 >
+    <name>My Documentation</name>
     <namespace>
-        <name type="abbreviation">phpDocumentor</name>
-        <name type="full">\phpDocumentor</name>
+        <name>phpDocumentor</name>
+        <fqsen>\phpDocumentor</fqsen>
         <function line_number="229" filename="/Application.php">
-            <name type="abbreviation">findAutoloader</name>
-            <name type="full">\phpDocumentor\findAutoloader</name>
+            <name>findAutoloader</name>
+            <fqsen>\phpDocumentor\findAutoloader</fqsen>
             <description type="short">
                 <docbook:para>Tries to find the autoloader relative to this file and return its path.</docbook:para>
             </description>
@@ -28,8 +29,8 @@
             </return>
         </function>
         <class final="false" abstract="false" line_number="31" filename="/Application.php">
-            <name type="abbreviation">Application</name>
-            <name type="full">\phpDocumentor\Application</name>
+            <name>Application</name>
+            <fqsen>\phpDocumentor\Application</fqsen>
             <description type="short">
                 <docbook:para>Application class for phpDocumentor.</docbook:para>
             </description>
@@ -37,27 +38,27 @@
                 <docbook:para>Can be used as bootstrap when the run method is not invoked.</docbook:para>
             </description>
             <constant line_number="33">
-                <name type="abbreviation">VERSION</name>
-                <name type="full">\phpDocumentor\Application::VERSION</name>
+                <name>VERSION</name>
+                <fqsen>\phpDocumentor\Application::VERSION</fqsen>
                 <type>string</type>
                 <value><![CDATA[2.0.0a11]]></value>
             </constant>
             <method final="false" abstract="false" static="false" visibility="public" line_number="38">
-                <name type="abbreviation">__construct</name>
-                <name type="full">\phpDocumentor\Application::__construct</name>
+                <name>__construct</name>
+                <fqsen>\phpDocumentor\Application::__construct</fqsen>
                 <description type="short">
                     <docbook:para>Initializes all components used by phpDocumentor.</docbook:para>
                 </description>
                 <return><type>void</type></return>
             </method>
             <method final="false" abstract="false" static="false" visibility="public" line_number="65">
-                <name type="abbreviation">run</name>
-                <name type="full">\phpDocumentor\Application::run</name>
+                <name>run</name>
+                <fqsen>\phpDocumentor\Application::run</fqsen>
                 <description type="short">
                     <docbook:para>Run the application and if no command is provided, use project:run.</docbook:para>
                 </description>
                 <argument by_reference="false">
-                    <name type="abbreviation">interactive</name>
+                    <name>interactive</name>
                     <description type="long">
                         <docbook:para>Whether to run in interactive mode.</docbook:para>
                     </description>
@@ -67,16 +68,16 @@
                 <return><type>void</type></return>
             </method>
             <method final="false" abstract="false" static="false" visibility="protected" line_number="80">
-                <name type="abbreviation">addCommandsForProjectNamespace</name>
-                <name type="full">\phpDocumentor\Application::addCommandsForProjectNamespace</name>
+                <name>addCommandsForProjectNamespace</name>
+                <fqsen>\phpDocumentor\Application::addCommandsForProjectNamespace</fqsen>
                 <description type="short">
                     <docbook:para>Adds the command to phpDocumentor that belong to the Project namespace.</docbook:para>
                 </description>
                 <return><type>void</type></return>
             </method>
             <method final="false" abstract="false" static="false" visibility="protected" line_number="92">
-                <name type="abbreviation">addCommandsForPluginNamespace</name>
-                <name type="full">\phpDocumentor\Application::addCommandsForTemplateNamespace</name>
+                <name>addCommandsForPluginNamespace</name>
+                <fqsen>\phpDocumentor\Application::addCommandsForTemplateNamespace</fqsen>
                 <description type="short">
                     <docbook:para>Adds the command to phpDocumentor that belong to the Template namespace.</docbook:para>
                 </description>
@@ -85,8 +86,8 @@
         </class>
     </namespace>
     <file hash="67fd7ce5fb604d9786eb181508074cc9">
-        <name type="abbreviation">Application.php</name>
-        <name type="full">/Application.php</name>
+        <name>Application.php</name>
+        <path>/Application.php</path>
         <description type="short">
             <docbook:para>phpDocumentor</docbook:para>
         </description>
@@ -94,22 +95,22 @@
             <docbook:para>PHP Version 5.3</docbook:para>
         </description>
         <author>
-            <name type="full">Mike van Riel</name>
+            <name>Mike van Riel</name>
             <email>mike.vanriel@naenius.com</email>
             <uri>http://phpdoc.org</uri>
         </author>
         <copyright>2010-2011 Mike van Riel / Naenius (http://www.naenius.com)</copyright>
         <license>
-            <name type="abbreviation">MIT</name>
+            <name>MIT</name>
             <uri>http://www.opensource.org/licenses/mit-license.php</uri>
         </license>
         <see>
-            <name type="full">http://www.phpdoc.org</name>
+            <name>http://www.phpdoc.org</name>
             <uri>http://www.phpdoc.org</uri>
         </see>
         <namespace-alias>
-            <name type="abbreviation">InputInterface</name>
-            <name type="full">\Symfony\Component\Console\Input\InputInterface</name>
+            <name>InputInterface</name>
+            <fqsen>\Symfony\Component\Console\Input\InputInterface</fqsen>
         </namespace-alias>
         <include type="require_once" line_number="18">
             <path>findAutoloader()</path>

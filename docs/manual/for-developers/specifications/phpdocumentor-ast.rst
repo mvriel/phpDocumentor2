@@ -5,13 +5,11 @@ Author(s):
     Mike van Riel <mike.vanriel@naenius.com>
 
 Inspiration source (should be removed after finishing):
-    http://www.w3.org/TR/SVG/struct.html
+    | http://www.w3.org/TR/SVG/struct.html
+    | http://www.ietf.org/rfc/rfc4287.txt
 
 Introduction
 ------------
-
-About a phpDocumentor Abstract Syntax Tree (PDAST)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This document intends to provide a concise description of the Abstract Syntax
 Tree for the phpDocumentor application and introduce an Internet Media Type
@@ -20,16 +18,6 @@ third parties.
 
 PDAST is a language for describing the syntax structure, including in-source
 documentation and meta-data, of a PHP Project for use in static analysis.
-
-Mime Type and filename extension
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The Mime Type (or Internet Media Type) for this document is
-*prs.phpdocumentor.ast+xml*, see RFC4288_ for more information regarding
-the *prs* prefix. This Mime Type is not officially registered at IANA.
-
-It is recommended that AST files for phpDocumentor have the extension
-"``.pdast.xml``".
 
 Compatibility with Other Standards Efforts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,6 +35,14 @@ with, leverages and integrates with other efforts:
 * PDAST is compatible with the Namespaces in XML Recommendation [`XML-NS`_]
 * PDAST is a representation format for the data described by the PHPDoc_
   Standard.
+
+Namespace
+~~~~~~~~~
+
+The XML Namespaces URI [W3C.REC-xml-names-19990114] for the XML data language
+described in this specification is:
+
+   http://phpdoc.org/ns/pdast
 
 Conventions Used In This Document
 ---------------------------------
@@ -78,8 +74,27 @@ Root directory
     also not mentioned in the PDAST as the PDAST file must be able to be used
     independent of the machine where phpDocumentor was ran.
 
-Document Structure
-------------------
+Documents
+---------
+
+This specification describes a single kind of Document for representing
+PHP Projects. Each PDAST Document's root is represented by the project_ element.
+
+namespace pdast = "http://phpdoc.org/ns/pdast"
+start = project_
+
+The Document is specified in terms of the XML Information Set, serialized as
+XML 1.0 [W3C.REC-xml-20040204] and identified with the
+"prs.phpdocumentor.ast+xml" media type, see RFC4288_ for more information
+regarding the *prs* prefix. Documents MUST be well-formed XML.
+
+It is recommended that the filename for the Document has the extension
+"``.pdast.xml``".
+
+Element Definitions
+-------------------
+
+.. project:
 
 Defining a PHP Project: the 'project' element
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -92,6 +107,7 @@ Defining a PHP Project: the 'project' element
    Content model:
        Any number of the following elements, in any order:
 
+       | 'name_'
        | 'namespace_'
        | 'file_'
        | 'index_'
@@ -102,9 +118,6 @@ Defining a PHP Project: the 'project' element
 
 Attribute Definitions
 #####################
-
-`title`="<string_>"
-    The title, or name, for this PHP Project
 
 `version`="<Version_>"
     Indicates the PDAST language version to which this PHP Project conforms.
@@ -131,13 +144,14 @@ The following example shows a simple PHP Project definition:
 .. code-block:: xml
 
    <?xml version="1.0" encoding="utf-8"?>
-   <project title="My Documentation" version="1.1">
-       <namespace><name type="abbreviated">My</name></namespace>
+   <project version="1.1">
+       <name>My Documentation</name>
+       <namespace><name>My</name></namespace>
        <file name="my/file.php" hash="ecbf63efefa9dda668e39eb3c99c46f6"></file>
-       <index type="marker" count="2"><name type="full">TODO</name></index>
+       <index type="marker" count="2"><name>TODO</name></index>
    </project>
 
-.. _file:
+.. _namespace:
 
 Namespaces: The 'namespace' element
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -178,11 +192,13 @@ Example
     <?xml version="1.0" encoding="utf-8" ?>
     <project>
         <namespace>
-            <name type="abbreviation">My</name>
-            <name type="full">\My</name>
+            <name>My</name>
+            <fqsen>\My</fqsen>
             ...
         </namespace>
     </project>
+
+.. file:
 
 Files: The 'file' element
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -195,11 +211,11 @@ Files: The 'file' element
    Content model:
        At most one of the following elements, in any order:
 
-       | Any of the DocBlock_ elements
        | 'source_'
 
        Any number of the following elements, in any order:
 
+       | Any of the DocBlock_ elements
        | 'name_'
        | 'namespace_alias_'
        | 'include_'
@@ -242,8 +258,8 @@ Example
     <?xml version="1.0" encoding="utf-8" ?>
     <project>
         <file hash="876487623874ccdde3629898">
-            <name type="full">/my/script.php</name>
-            <name type="abbreviation">script.php</name>
+            <name>script.php</name>
+            <path>/my/script.php</path>
             <description type="short">This is a short description</copyright>
             <copyright>2012 phpDocumentor</copyright>
         </file>
@@ -271,11 +287,11 @@ The 'index' element
 Attribute Definitions
 #####################
 
-`type`="<string>"
+`type`="<string_>"
     A string representing which type of elements are contained inside this index.
     An example can be `package`, where each index item represents a package.
 
-`count`="<integer>"class
+`count`="<integer_>"class
     If this index item represents a collection of other items then this
     attribute may be present indicating how many sub-items are present in the
     PDAST.
@@ -308,11 +324,11 @@ Example
     <?xml version="1.0" encoding="utf-8" ?>
     <project>
         <index type="package">
-            <name type="abbreviation">My</name>
-            <name type="full">\My</name>
+            <name>My</name>
+            <fqsen>\My</fqsen>
             <index type="package">
-                <name type="abbreviation">Package</name>
-                <name type="full">\My\Package</name>
+                <name>Package</name>
+                <fqsen>\My\Package</fqsen>
             </index>
         </index>
     </project>
@@ -321,8 +337,8 @@ Example
 
     <?xml version="1.0" encoding="utf-8" ?>
     <project>
-        <index type="marker" count="0"><name type="full">TODO</name></index>
-        <index type="marker" count="0"><name type="full">FIXME</name></index>
+        <index type="marker" count="0"><name>TODO</name></index>
+        <index type="marker" count="0"><name>FIXME</name></index>
     </project>
 
 .. _source:
@@ -360,13 +376,84 @@ Example
     <project>
         <file>
             ...
-            <source><[CDATA[[eJyzsS/IKODS19LiUtBSCMnILFYAokSF4oz8ohKFlNTi5KLMgpL
-M/Dw9oDyqkpz8vHRsKhwKEosScxVigjNzC3JSI3x9XHNSc1PzSqJjFVRKUotLYMqKUktKi/IUyvIzU4B
-8fa600rxkkDkKIEUaYKWaXNVcCkDAVcsFABEUM1M=]]></source>
+            <source><[CDATA[[eJyzsS/IKODS19LiUtBSCMnILFYAokSF4oz8ohKFlNTi5KLMgpLM/Dw9oDyqkpz8vHRsKhwKEosScxVigjNzC3JSI3x9XHNSc1PzSqJjFVRKUotLYMqKUktKi/IUyvIzU4B8fa600rxkkDkKIEUaYKWaXNVcCkDAVcsFABEUM1M=]]></source>
         </file>
     </project>
 
-.. _Class:
+.. _function:
+
+The 'function' element
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. admonition:: Definition
+
+   Categories:
+       Descriptive element, Structural element
+
+   Content model:
+       Any number of the following elements, in any order:
+
+       | Any of the DocBlock_ elements
+       | 'name_'
+       | 'argument_'
+
+   Attributes:
+       | 'filename'
+       | 'line_number'
+
+Attribute Definitions
+#####################
+
+`filename`="<string>"
+    String containing the full path name for the file that contains this
+    function. The given path is relative to the Project's Root.
+
+`line_number`="<integer>"
+    Number defining on which line of the file provided in the parents'
+    'filename' attribute the represented method begins.
+
+Overview
+########
+
+The contents of the 'function' element represent the definition of a specific
+global function. The abbreviated name represents the name without namespace
+indicators where the full name represents the FQSEN of the associated function.
+
+Functions never occur inside class_ elements, please see the method_ element for
+functions inside a class.
+
+Example
+#######
+
+.. code-block:: xml
+
+    <?xml version="1.0" encoding="utf-8" ?>
+    <project>
+        <file>
+            ...
+            <function line_number="229" filename="/Application.php">
+                <name>findAutoloader</name>
+                <fqsen>\phpDocumentor\findAutoloader</fqsen>
+                <description type="short">
+                    <docbook:para>Tries to find the autoloader relative to this file and return its path.</docbook:para>
+                </description>
+                <throws>
+                    <description type="long">
+                        <docbook:para>if the autoloader could not be found.</docbook:para>
+                    </description>
+                    <type>\RuntimeException</type>
+                </throws>
+                <return>
+                    <description type="long">
+                        <docbook:para>the path of the autoloader.</docbook:para>
+                    </description>
+                    <type>string</type>
+                </return>
+            </function>
+        </file>
+    </project>
+
+.. _class:
 
 The 'class' element
 ~~~~~~~~~~~~~~~~~~~
@@ -377,12 +464,9 @@ The 'class' element
        Container element, Structural element
 
    Content model:
-       At most one of the following elements, in any order:
-
-       | Any of the DocBlock_ elements
-
        Any number of the following elements, in any order:
 
+       | Any of the DocBlock_ elements
        | 'name_'
        | 'extends_'
        | 'implements_'
@@ -434,8 +518,8 @@ Example
             <class final="false" abstract="false" line_number="31"
                 filename="/Application.php"
             >
-                <name type="abbreviation">Application</name>
-                <name type="full">\phpDocumentor\Application</name>
+                <name>Application</name>
+                <fqsen>\phpDocumentor\Application</name>
                 <description type="short">
                     <docbook:para>
                         Application class for phpDocumentor.
@@ -462,12 +546,9 @@ The 'interface' element
        Container element, Structural element
 
    Content model:
-       At most one of the following elements, in any order:
-
-       | Any of the DocBlock_ elements
-
        Any number of the following elements, in any order:
 
+       | Any of the DocBlock_ elements
        | 'name_'
        | 'extends_'
        | 'implements_'
@@ -506,12 +587,9 @@ The 'property' element
        Descriptive element, Structural element, Inheritable element
 
    Content model:
-       At most one of the following elements, in any order:
-
-       | Any of the DocBlock_ elements
-
        Any number of the following elements, in any order:
 
+       | Any of the DocBlock_ elements
        | 'name_'
        | 'default_'
 
@@ -553,12 +631,9 @@ The 'method' element
        Descriptive element, Structural element, Inheritable element
 
    Content model:
-       At most one of the following elements, in any order:
-
-       | Any of the DocBlock_ elements
-
        Any number of the following elements, in any order:
 
+       | Any of the DocBlock_ elements
        | 'name_'
        | 'argument_'
 
@@ -594,11 +669,11 @@ Overview
 Example
 #######
 
-DocBlock elements
------------------
+DocBlock Element Definitions
+----------------------------
 
 Every element in the category Structural Element may be preceded by a DocBlock
-in the source code and may thus have any of the elements mentiones in this
+in the source code and may thus have any of the elements mentioned in this
 chapter.
 
 .. _description:
@@ -734,15 +809,15 @@ Example
         <namespace ...>
             <class ...>
                 <method>
-                    <name type="full">myMethod</name>
+                    <name>myMethod</name>
                     <inherited_from class="\SuperClass">
                 </method>
             </class>
         </namespace>
     </project>
 
-Common elements
----------------
+Common Element Definitions
+--------------------------
 
 .. _name:
 
@@ -756,16 +831,6 @@ The 'name' element
 
    Content model:
        Any character data.
-
-   Attributes:
-       | 'type'
-
-Attribute Definitions
-#####################
-
-`type`="<abbreviated|full>"
-    Determines what type of name is represented by this element. This attribute
-    may be omitted, in which case the value 'full' is implied.
 
 Overview
 ########
@@ -865,68 +930,8 @@ Version
 Example
 -------
 
-.. code-block::xml
-
-   <?xml version="1.0" encoding="utf-8"?>
-
-   <project title="Example" xmlns="http://phpdoc.org/ns/pdast" version="1.1">
-       <namespace>
-           <name type="abbreviation">My</name>
-           <name type="full">\My</name>
-           <class final="false" abstract="false" file="my/example.php"
-               line_number="10"
-           >
-               <name type="full">\My\Example</name>
-               <name type="abbreviation">Example</name>
-               <description type="short">
-                   <[[CDATA[This is a short description.]]>
-               </description>
-               <description type="long">
-                   <[[CDATA[
-                       This is a long description that
-                       may span multiple lines.
-                   ]]>
-               </description>
-               <author name="author" line_number="10">
-                   <name>Mike van Riel</name>
-                   <email>mike.vanriel@naenius.com</email>
-               </author>
-               <constant>
-                   <name type="full">MY_CONSTANT</name>
-                   <type>string</type>
-               </constant>
-               <property final="false" static="false" visibility="public"
-                   line_number="10"
-               >
-                   <name type="full">my_property</name>
-                   <description type="short">
-                       <[[DATA[Example property]]>
-                   </description>
-                   <type>string</type>
-               </property>
-               <method final="false" abstract="false" static="false"
-                   visibility="public" line_number="10"
-               >
-                   <name type="full">myMethod</name>
-                   <description type="short">
-                       <[[DATA[Example Method]]>
-                   </description>
-                   <argument by_reference="false">
-                       <name type="full">argument1</name>
-                       <description type="long">
-                           <[[CDATA[Argument1's long description]]>
-                       </description
-                       <type>\SimpleXMLElement</type>
-                       <type>null</type>
-                       <default>null</default>
-                   </argument>
-                   <returns>string</returns>
-                   <returns>null</returns>
-               </method>
-           </class>
-       </namespace>
-       <file name="my/example.php" hash="876434C4847393474942234"></file>
-   </project>
+.. literalinclude:: ast-example.xml
+   :language: xml
 
 .. _`XML-NS`: http://www.w3.org/TR/xml-names/
 .. _XML:    http://www.w3.org/TR/xml/

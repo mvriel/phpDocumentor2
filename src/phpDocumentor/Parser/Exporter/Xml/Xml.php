@@ -21,9 +21,6 @@ use phpDocumentor\Reflection\FileReflector;
  */
 class Xml extends ExporterAbstract
 {
-    /** @var \DOMDocument $xml Document containing the collected data */
-    protected $xml = null;
-
     /**
      * Initializes this exporter.
      *
@@ -328,16 +325,6 @@ class Xml extends ExporterAbstract
                 $node->parentNode->removeChild($node);
             }
         }
-    }
-
-    /**
-     * Returns the DOMDocument for this exporter.
-     *
-     * @return \DOMDocument
-     */
-    public function getDomDocument()
-    {
-        return $this->xml;
     }
 
     /**

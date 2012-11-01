@@ -20,6 +20,9 @@ use phpDocumentor\Parser;
  */
 abstract class ExporterAbstract extends Parser\ParserAbstract
 {
+    /** @var \DOMDocument $xml Document containing the collected data */
+    protected $xml = null;
+
     /**
      * Parser object containing all properties used during the parsing process
      * and provided to influence export process.
@@ -103,4 +106,15 @@ abstract class ExporterAbstract extends Parser\ParserAbstract
     {
         return $this->include_source;
     }
+
+    /**
+     * Returns the DOMDocument for this exporter.
+     *
+     * @return \DOMDocument
+     */
+    public function getDomDocument()
+    {
+        return $this->xml;
+    }
+
 }
