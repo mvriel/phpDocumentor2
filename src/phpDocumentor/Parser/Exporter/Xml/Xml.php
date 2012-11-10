@@ -33,9 +33,7 @@ class Xml extends ExporterAbstract
         $document_element = new \DOMElement('project');
         $this->xml->appendChild($document_element);
 
-        $document_element->setAttribute(
-            'version', \phpDocumentor\Application::VERSION
-        );
+        $document_element->setAttribute('version', \phpDocumentor\Application::VERSION);
         $document_element->setAttribute('title', $this->parser->getTitle());
     }
 
@@ -114,9 +112,7 @@ class Xml extends ExporterAbstract
         }
 
         $packages = $this->generateNamespaceTree(array_keys($packages));
-        $this->generateNamespaceElements(
-            $packages, $dom->documentElement, 'package'
-        );
+        $this->generateNamespaceElements($packages, $dom->documentElement, 'package');
     }
 
     /**
@@ -198,7 +194,7 @@ class Xml extends ExporterAbstract
      *
      * @return \DOMNodeList
      */
-    protected function getNodeListForTagBasedQuery($dom ,$marker)
+    protected function getNodeListForTagBasedQuery($dom, $marker)
     {
         $xpath = new \DOMXPath($dom);
 
@@ -258,9 +254,8 @@ class Xml extends ExporterAbstract
      *
      * @return void
      */
-    protected function generateNamespaceElements($namespaces, $parent_element,
-        $node_name = 'namespace'
-    ) {
+    protected function generateNamespaceElements($namespaces, $parent_element, $node_name = 'namespace')
+    {
         foreach ($namespaces as $name => $sub_namespaces) {
             $node = new \DOMElement($node_name);
             $parent_element->appendChild($node);

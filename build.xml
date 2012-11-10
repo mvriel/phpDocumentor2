@@ -28,7 +28,7 @@
     <!-- Generate checkstyle.xml -->
     <target name="build:phpcs" description="Checks for Coding Standard violations">
         <echo message="Executing phpCodeSniffer, output is in 'build/logs/checkstyle.xml'"/>
-        <phpcodesniffer file="${project.basedir}/src/phpDocumentor" format="checkstyle" standard="PEAR" haltonerror="true">
+        <phpcodesniffer file="${project.basedir}/src/phpDocumentor" format="checkstyle" standard="PSR2" haltonerror="true">
             <formatter type="checkstyle" outfile="${project.basedir}/build/logs/checkstyle.xml"/>
         </phpcodesniffer>
     </target>
@@ -53,9 +53,9 @@
 
     <!-- Generate pmd-cpd.xml -->
     <target name="build:phpcpd" description="Search for duplicated code">
-        <phpcpd file="${project.basedir}/src/phpDocumentor">
-            <formatter type="pmd" outfile="${project.basedir}/build/logs/pmd-cpd.xml"/>
-        </phpcpd>
+        <!--<phpcpd file="${project.basedir}/src/phpDocumentor">-->
+            <!--<formatter type="pmd" outfile="${project.basedir}/build/logs/pmd-cpd.xml"/>-->
+        <!--</phpcpd>-->
     </target>
 
     <!-- Generate pmd.xml -->
@@ -127,7 +127,7 @@
                         promptText="Enter the stability of the new version (alpha, beta or stable)"
                         useExistingValue="true"/>
         <exec
-            command="php bin/utils/package.php ${version.number} ${version.stability} make"
+            command="php bin/utils/package.php ${version.number} ${version.number} ${version.stability} make"
             passthru="true" dir="${project.basedir}" checkreturn="true"
         />
         <exec
