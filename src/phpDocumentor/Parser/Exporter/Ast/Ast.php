@@ -26,6 +26,15 @@ class Ast extends ExporterAbstract
     protected $xml;
 
     /**
+     * Tree representation of all classes subdivided into their namespaces.
+     *
+     * @var string[]
+     */
+    protected $classes = array(
+        '\\' => array()
+    );
+
+    /**
      * Initializes this exporter.
      *
      * @return void
@@ -79,7 +88,7 @@ class Ast extends ExporterAbstract
             $class_writer->setIndent(true);
             $class_writer->startDocument('1.0', 'utf-8');
 
-            $this->exportClass($class_writer, $contents, $file->getFilename());
+            $this->exportClassInterfaceOrTrait($class_writer, $contents, $file->getFilename());
 
             $class_writer->endDocument();
             var_dump($class_writer->outputMemory());
@@ -112,7 +121,7 @@ class Ast extends ExporterAbstract
 //        var_dump($writer->outputMemory());
     }
 
-    protected function exportClass(\XMLWriter $writer, InterfaceReflector $class, $filename)
+    protected function exportClassInterfaceOrTrait(\XMLWriter $writer, InterfaceReflector $class, $filename)
     {
         $element_name = 'interface';
         if ($class instanceof \phpDocumentor\Reflection\ClassReflector) {
@@ -124,8 +133,10 @@ class Ast extends ExporterAbstract
 
         $writer->startElement($element_name);
 
-        $writer->writeAttribute('final', var_export($class->isFinal(), true));
-        $writer->writeAttribute('abstract', var_export($class->isAbstract(), true));
+        if ($class instanceof \phpDocumentor\Reflection\ClassReflector) {
+            $writer->writeAttribute('final', var_export($class->isFinal(), true));
+            $writer->writeAttribute('abstract', var_export($class->isAbstract(), true));
+        }
         $writer->writeAttribute('line_number', $class->getLinenumber());
         $writer->writeAttribute('file_name', $filename);
 
@@ -133,12 +144,14 @@ class Ast extends ExporterAbstract
         $writer->writeElement('fqsen', $class->getName());
         $this->exportDocBlock($writer, $class->getDocBlock());
 
-        foreach ($class->getConstants() as $constant) {
-            $this->exportConstant($writer, $constant);
-        }
+        if ($class instanceof \phpDocumentor\Reflection\ClassReflector) {
+            foreach ($class->getConstants() as $constant) {
+                $this->exportConstant($writer, $constant);
+            }
 
-        foreach ($class->getProperties() as $property) {
-            $this->exportProperty($writer, $property);
+            foreach ($class->getProperties() as $property) {
+                $this->exportProperty($writer, $property);
+            }
         }
 
         foreach ($class->getMethods() as $method) {
