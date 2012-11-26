@@ -25,14 +25,19 @@ class Ast extends ExporterAbstract
     /** @var \DOMDocument $xml Document containing the collected data */
     protected $xml;
 
+    /** @var \XMLWriter */
+    protected $writer;
+
     /**
      * Tree representation of all classes subdivided into their namespaces.
      *
      * @var string[]
      */
-    protected $classes = array(
+    protected $namespaces = array(
         '\\' => array()
     );
+
+    protected $files = array();
 
     /**
      * Initializes this exporter.
@@ -41,17 +46,30 @@ class Ast extends ExporterAbstract
      */
     public function initialize()
     {
-//        $this->xml = new \DOMDocument('1.0', 'utf-8');
-//        $this->xml->formatOutput = true;
-//
-//        $document_element = new \DOMElement('project');
-//        $this->xml->appendChild($document_element);
-//
-//        $document_element->setAttribute('version', '1.0.0');
-//
-//        $name = new \DOMElement('name', $this->parser->getTitle());
-//        $document_element->appendChild($name);
+        $this->writer = new \XMLWriter();
+        $this->writer->openUri('structure.xml');
+        $this->writer->setIndent(true);
+        $this->writer->startDocument('1.0', 'utf-8');
+
+        $this->writer->startElement('project');
+
+        $this->writer->writeAttribute('xmlns', 'http://phpdoc.org/ns/pdast');
+        $this->writer->writeAttributeNs('xmlns', 'docbook', null, 'http://docbook.org/ns/docbook');
+        $this->writer->writeAttributeNs('xmlns', 'checkstyle', null, 'antlib:com.puppycrawl.tools.checkstyle');
+        $this->writer->writeAttribute('version', '1.0.0');
+        $this->writer->writeElement('name', $this->parser->getTitle());
     }
+
+    public function finalize()
+    {
+        $this->exportNamespace('\\', $this->namespaces['\\']);
+        foreach ($this->files as $file) {
+            $this->writer->writeRaw(stream_get_contents($file));
+        }
+        $this->writer->endElement();
+        $this->writer->endDocument();
+    }
+
 
     /**
      * Renders the reflected file to a structure file.
@@ -65,9 +83,9 @@ class Ast extends ExporterAbstract
         $writer = new \XMLWriter();
         $writer->openMemory();
         $writer->setIndent(true);
-        $writer->startDocument('1.0', 'utf-8');
         $writer->startElement('file');
 
+        $writer->writeAttribute('hash', $file->getHash());
         $writer->writeElement('name', basename($file->getFilename()));
         $writer->writeElement('path', $file->getFilename());
         $this->exportDocBlock($writer, $file->getDocBlock());
@@ -79,46 +97,89 @@ class Ast extends ExporterAbstract
             $writer->endElement();
         }
 
-        $writer->endElement();
-        $writer->endDocument();
+        foreach ($file->getParseErrors() as $error) {
+            list($severity, $message, $line_number, $code) = $error;
 
+            $writer->startElementNs('checkstyle', 'error', null);
+            $writer->writeAttribute('line', $line_number);
+            $writer->writeAttribute('severity', $severity === 'ERROR' ? 'error' : 'warning');
+            $writer->writeAttribute('message', $message);
+            $writer->writeAttribute('source', 'org.phpdoc.checkstyle.checks.'.$code);
+            $writer->endElement();
+        }
+
+        $writer->endElement();
+
+        $stream = fopen('php://temp', 'r+');
+        fputs($stream, $writer->outputMemory());
+        rewind($stream);
+
+        $this->files[] = $stream;
+
+        /** @var \phpDocumentor\Reflection\ClassReflector $contents */
         foreach ($file->getClasses() as $contents) {
             $class_writer = new \XMLWriter();
             $class_writer->openMemory();
             $class_writer->setIndent(true);
-            $class_writer->startDocument('1.0', 'utf-8');
 
             $this->exportClassInterfaceOrTrait($class_writer, $contents, $file->getFilename());
 
-            $class_writer->endDocument();
-            var_dump($class_writer->outputMemory());
+            $this->storeInNamespaceTree($contents->getNamespace(), $class_writer->outputMemory());
         }
 
         foreach ($file->getConstants() as $contents) {
             $constant_writer = new \XMLWriter();
             $constant_writer->openMemory();
             $constant_writer->setIndent(true);
-            $constant_writer->startDocument('1.0', 'utf-8');
 
             $this->exportConstant($constant_writer, $contents, $file->getFilename());
 
-            $constant_writer->endDocument();
-            var_dump($constant_writer->outputMemory());
+            $this->storeInNamespaceTree($contents->getNamespace(), $constant_writer->outputMemory());
         }
 
         foreach ($file->getFunctions() as $contents) {
             $function_writer = new \XMLWriter();
             $function_writer->openMemory();
             $function_writer->setIndent(true);
-            $function_writer->startDocument('1.0', 'utf-8');
 
             $this->exportFunction($function_writer, $contents, $file->getFilename());
 
-            $function_writer->endDocument();
-            var_dump($function_writer->outputMemory());
+            $this->storeInNamespaceTree($contents->getNamespace(), $function_writer->outputMemory());
+        }
+    }
+
+    protected function exportNamespace($name, $elements)
+    {
+        $this->writer->startElement('namespace');
+        $this->writer->writeElement('name', $name);
+        foreach ($elements as $element_name => $element) {
+            if (is_array($element)) {
+                $this->exportNamespace($element_name, $element);
+            } else {
+                $this->writer->writeRaw(stream_get_contents($element));
+            }
+        }
+        $this->writer->endElement();
+    }
+
+
+    protected function storeInNamespaceTree($namespace, $contents)
+    {
+        $stream = fopen('php://temp', 'r+');
+        fputs($stream, $contents);
+        rewind($stream);
+
+        $tree = &$this->namespaces['\\'];
+        $path = explode('\\', $namespace);
+        foreach ($path as $location) {
+            if (!isset($tree[$location])) {
+                $tree[$location] = array();
+            }
+
+            $tree = &$tree[$location];
         }
 
-//        var_dump($writer->outputMemory());
+        $tree[] = $stream;
     }
 
     protected function exportClassInterfaceOrTrait(\XMLWriter $writer, InterfaceReflector $class, $filename)
@@ -229,7 +290,7 @@ class Ast extends ExporterAbstract
      */
     public function getContents()
     {
-//        return $this->xml->saveXML();
+        return null;
     }
 
     protected function exportDocBlock(\XMLWriter $writer, DocBlock $docblock = null)

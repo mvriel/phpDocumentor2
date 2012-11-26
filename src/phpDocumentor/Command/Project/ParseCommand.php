@@ -258,9 +258,12 @@ HELP
             $progress->finish();
         }
 
-        $output->write('Storing structure.xml in "'.$target.'" .. ');
-        file_put_contents($target, $result);
-        $output->writeln('OK');
+        // if the result is null than the exporter has directly written to file
+        if ($result !== null) {
+            $output->write('Storing structure.xml in "'.$target.'" .. ');
+            file_put_contents($target, $result);
+            $output->writeln('OK');
+        }
 
         return 0;
     }
