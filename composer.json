@@ -34,7 +34,8 @@
         "phpdocumentor/template-new-black": "1.*",
         "phpdocumentor/template-zend": "1.*",
         "phpdocumentor/template-old-ocean": "1.*",
-        "phpdocumentor/template-checkstyle": "1.*"
+        "phpdocumentor/template-checkstyle": "1.*",
+        "guzzle/guzzle": "3.0.*"
     },
     "suggests": {
         "ext-xsl": "to use the XSL based templates"

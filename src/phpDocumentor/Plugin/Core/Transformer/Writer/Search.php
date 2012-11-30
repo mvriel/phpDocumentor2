@@ -2,57 +2,106 @@
 /**
  * phpDocumentor
  *
- * PHP Version 5
+ * PHP Version 5.3
  *
- * @category   phpDocumentor
- * @package    Transformer
- * @subpackage Writers
- * @author     Mike van Riel <mike.vanriel@naenius.com>
- * @copyright  2010-2011 Mike van Riel / Naenius (http://www.naenius.com)
- * @license    http://www.opensource.org/licenses/mit-license.php MIT
- * @link       http://phpdoc.org
+ * @copyright 2010-2012 Mike van Riel / Naenius (http://www.naenius.com)
+ * @license   http://www.opensource.org/licenses/mit-license.php MIT
+ * @link      http://phpdoc.org
  */
 
 namespace phpDocumentor\Plugin\Core\Transformer\Writer;
 
+use phpDocumentor\Transformer\Writer\WriterAbstract;
+use phpDocumentor\Transformer\Transformation;
+
 /**
  * Search writer responsible for building the search index.
- *
- * @category   phpDocumentor
- * @package    Transformer
- * @subpackage Writers
- * @author     Mike van Riel <mike.vanriel@naenius.com>
- * @license    http://www.opensource.org/licenses/mit-license.php MIT
- * @link       http://phpdoc.org
  */
-class Search extends \phpDocumentor\Transformer\Writer\WriterAbstract
+class Search extends WriterAbstract
 {
     /**
      * Creates the search index at the artifact location.
      *
-     * @param \DOMDocument                        $structure      Structure source
-     *     use as basis for the transformation.
-     * @param \phpDocumentor\Transformer\Transformation $transformation Transformation
-     *     that supplies the meta-data for this writer.
+     * @param \DOMDocument   $structure      Structure source use as basis for the transformation.
+     * @param Transformation $transformation Transformation that supplies the meta-data for this writer.
      *
      * @return void
      */
-    public function transform(
-        \DOMDocument $structure,
-        \phpDocumentor\Transformer\Transformation $transformation
-    ) {
-        $this->createXmlIndex(
-            $structure,
-            $transformation->getTransformer()->getTarget() . DIRECTORY_SEPARATOR
-            . $transformation->getArtifact()
-        );
+    public function transform(\DOMDocument $structure, Transformation $transformation)
+    {
+        if (!$transformation->getSource()) {
+            $this->createXmlIndex(
+                $structure,
+                $transformation->getTransformer()->getTarget() . DIRECTORY_SEPARATOR . $transformation->getArtifact()
+            );
+        } else {
+            $xpath = new \DOMXPath($structure);
+            $node_list = $xpath->query(
+                '/project/file/class|/project/file/interface|/project/file/trait|/project/file/function'
+                . '|/project/file/constant|/project/file/*/property|/project/file/*/method|/project/file/*/constant'
+            );
+
+            var_dump($transformation->getParameters());
+
+            $mapper = new \phpDocumentor\Search\Mapper(
+                array('description' => '{{data.docblock.description}}')
+            );
+
+            $configuration = new \phpDocumentor\Search\Engine\Configuration\ElasticSearch(new \Guzzle\Http\Client());
+            $engine = new \phpDocumentor\Search\Engine\ElasticSearch($configuration);
+
+            for ($i = 0; $i < $node_list->length; $i++) {
+                $document = $this->generateDocument($mapper, simplexml_import_dom($node_list->item($i)));
+                $engine->persist($document);
+            }
+
+            $this->log('Sending data to ElasticSearch');
+//            $engine->flush();
+        }
+    }
+
+    protected function generateDocument(\phpDocumentor\Search\Mapper $mapper, \SimpleXMLElement $node)
+    {
+        $document = new \phpDocumentor\Search\Document();
+        $document->setId($this->generateFqsen($node));
+        $mapper->populate($document, $node);
+        return $document;
+    }
+
+    protected function generateFqsen(\SimpleXMLElement $node)
+    {
+        switch($node->getName()) {
+            case 'class':
+            case 'interface':
+            case 'trait':
+                return (string)$node->full_name;
+            case 'function':
+                return (string)$node->full_name.'()';
+            case 'method':
+                /** @var \SimpleXMLElement $parent_node  */
+                $parent_node = current($node->xpath("parent::*"));
+                $fqcn        = (string)$parent_node->full_name;
+                return $fqcn . '::'  . (string)$node->name.'()';
+            case 'property':
+                /** @var \SimpleXMLElement $parent_node  */
+                $parent_node = current($node->xpath("parent::*"));
+                $fqcn        = (string)$parent_node->full_name;
+                return $fqcn . '::'  . (string)$node->name;
+            case 'constant':
+                /** @var \SimpleXMLElement $parent_node  */
+                $parent_node = current($node->xpath("parent::*"));
+                $fqcn        = (string)$parent_node->full_name;
+                return (in_array($parent_node->getName(), array('class', 'interface', 'trait')) ? $fqcn . '::' : '')
+                    . (string)$node->name;
+            default:
+                break;
+        }
     }
 
     /**
      * Helper method to create the actual index.
      *
-     * @param \DOMDocument $xml         Structure source use as basis for
-     *     the transformation.
+     * @param \DOMDocument $xml         Structure source use as basis for the transformation.
      * @param string      $target_path The path where to generate the index.
      *
      * @todo refactor this method to be smaller and less complex.
@@ -70,30 +119,26 @@ class Search extends \phpDocumentor\Transformer\Writer\WriterAbstract
             foreach ($file->interface as $interface) {
                 $interface_node = $output->addChild('node');
                 $interface_node->value = (string)$interface->full_name;
-                $interface_node->id = $file['generated-path'] . '#'
-                    . $interface_node->value;
+                $interface_node->id = $file['generated-path'] . '#' . $interface_node->value;
                 $interface_node->type = 'interface';
 
                 foreach ($interface->constant as $constant) {
                     $node = $output->addChild('node');
-                    $node->value = (string)$interface->full_name . '::'
-                        . (string)$constant->name;
+                    $node->value = (string)$interface->full_name . '::' . (string)$constant->name;
                     $node->id = $file['generated-path'] . '#' . $node->value;
                     $node->type = 'constant';
                 }
 
                 foreach ($interface->property as $property) {
                     $node = $output->addChild('node');
-                    $node->value = (string)$interface->full_name . '::'
-                        . (string)$property->name;
+                    $node->value = (string)$interface->full_name . '::' . (string)$property->name;
                     $node->id = $file['generated-path'] . '#' . $node->value;
                     $node->type = 'property';
                 }
 
                 foreach ($interface->method as $method) {
                     $node = $output->addChild('node');
-                    $node->value = (string)$interface->full_name . '::'
-                        . (string)$method->name . '()';
+                    $node->value = (string)$interface->full_name . '::' . (string)$method->name . '()';
                     $node->id = $file['generated-path'] . '#' . $node->value;
                     $node->type = 'method';
                 }
@@ -107,8 +152,7 @@ class Search extends \phpDocumentor\Transformer\Writer\WriterAbstract
 
                 foreach ($class->constant as $constant) {
                     $node = $output->addChild('node');
-                    $node->value = (string)$class->full_name . '::'
-                        . (string)$constant->name;
+                    $node->value = (string)$class->full_name . '::' . (string)$constant->name;
                     $node->id = $file['generated-path'] . '#' . $node->value;
                     $node->type = 'constant';
                 }
@@ -123,8 +167,7 @@ class Search extends \phpDocumentor\Transformer\Writer\WriterAbstract
 
                 foreach ($class->method as $method) {
                     $node = $output->addChild('node');
-                    $node->value = (string)$class->full_name . '::'
-                        . (string)$method->name . '()';
+                    $node->value = (string)$class->full_name . '::' . (string)$method->name . '()';
                     $node->id = $file['generated-path'] . '#' . $node->value;
                     $node->type = 'method';
                 }

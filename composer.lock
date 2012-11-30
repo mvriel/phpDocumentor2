@@ -1,5 +1,5 @@
 {
-    "hash": "69670f1b96882d57189b9ac8fe0045cc",
+    "hash": "a79d79247542522502500a4d4ea37d65",
     "packages": [
         {
             "name": "cilex/cilex",
@@ -30,7 +30,7 @@
                 "symfony/yaml": ">=1.0.0",
                 "symfony/validator": ">=1.0.0"
             },
-            "time": "1347541340",
+            "time": "2012-09-13 13:02:20",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -76,7 +76,7 @@
             "require": {
                 "php": ">=5.3"
             },
-            "time": "1342369887",
+            "time": "2012-07-15 16:31:27",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -119,6 +119,93 @@
             ]
         },
         {
+            "name": "guzzle/guzzle",
+            "version": "v3.0.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/guzzle/guzzle",
+                "reference": "v3.0.5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://github.com/guzzle/guzzle/archive/v3.0.5.zip",
+                "reference": "v3.0.5",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.2",
+                "ext-curl": "*",
+                "symfony/event-dispatcher": "2.1.*"
+            },
+            "replace": {
+                "guzzle/batch": "self.version",
+                "guzzle/cache": "self.version",
+                "guzzle/common": "self.version",
+                "guzzle/http": "self.version",
+                "guzzle/inflection": "self.version",
+                "guzzle/iterator": "self.version",
+                "guzzle/log": "self.version",
+                "guzzle/parser": "self.version",
+                "guzzle/plugin": "self.version",
+                "guzzle/plugin-async": "self.version",
+                "guzzle/plugin-backoff": "self.version",
+                "guzzle/plugin-cache": "self.version",
+                "guzzle/plugin-cookie": "self.version",
+                "guzzle/plugin-curlauth": "self.version",
+                "guzzle/plugin-history": "self.version",
+                "guzzle/plugin-log": "self.version",
+                "guzzle/plugin-md5": "self.version",
+                "guzzle/plugin-mock": "self.version",
+                "guzzle/plugin-oauth": "self.version",
+                "guzzle/service": "self.version",
+                "guzzle/stream": "self.version"
+            },
+            "require-dev": {
+                "doctrine/common": "*",
+                "symfony/class-loader": "*",
+                "monolog/monolog": "1.*",
+                "zendframework/zend-cache": "2.0.*",
+                "zendframework/zend-log": "2.0.*",
+                "zend/zend-log1": "1.12",
+                "zend/zend-cache1": "1.12",
+                "phpunit/phpunit": "3.7.*"
+            },
+            "time": "2012-11-19 00:15:33",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-0": {
+                    "Guzzle\\Tests": "tests/",
+                    "Guzzle": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Michael Dowling",
+                    "email": "mtdowling@gmail.com",
+                    "homepage": "https://github.com/mtdowling"
+                },
+                {
+                    "name": "Guzzle Community",
+                    "homepage": "https://github.com/guzzle/guzzle/contributors"
+                }
+            ],
+            "description": "Guzzle is a PHP HTTP client library and framework for building RESTful web service clients",
+            "homepage": "http://guzzlephp.org/",
+            "keywords": [
+                "framework",
+                "curl",
+                "http",
+                "rest",
+                "http client",
+                "client",
+                "web service"
+            ]
+        },
+        {
             "name": "nikic/php-parser",
             "version": "dev-master",
             "source": {
@@ -135,7 +222,7 @@
             "require": {
                 "php": ">=5.2"
             },
-            "time": "1351702254",
+            "time": "2012-10-31 16:50:54",
             "type": "library",
             "installation-source": "source",
             "autoload": {
@@ -557,7 +644,7 @@
             "require": {
                 "php": ">=5.3.0"
             },
-            "time": "1347278988",
+            "time": "2012-09-10 12:09:48",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -604,7 +691,7 @@
             "require": {
                 "php": ">=5.3.3"
             },
-            "time": "1352017759",
+            "time": "2012-11-04 08:29:19",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -705,7 +792,7 @@
             "require": {
                 "php": ">=5.3.3"
             },
-            "time": "1350717030",
+            "time": "2012-10-20 07:10:30",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -752,7 +839,7 @@
             "require": {
                 "php": ">=5.3.3"
             },
-            "time": "1350717030",
+            "time": "2012-10-20 07:10:30",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -798,7 +885,7 @@
             "require": {
                 "php": ">=5.2.4"
             },
-            "time": "1352101924",
+            "time": "2012-11-05 07:52:04",
             "type": "library",
             "extra": {
                 "branch-alias": {

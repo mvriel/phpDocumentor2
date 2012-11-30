@@ -250,7 +250,7 @@ class Transformation extends TransformerAbstract
 
         /** @var \SimpleXMLElement $value */
         foreach ($sxml->children() as $key => $value) {
-            $result[$key] = count($value->children()) > 1
+            $result[$key] = $value->children()->count() > 1
                 ? $this->convertSimpleXmlToArray($value)
                 : (string)$value;
         }
