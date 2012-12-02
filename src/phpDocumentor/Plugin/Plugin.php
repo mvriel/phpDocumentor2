@@ -40,9 +40,6 @@ class Plugin extends PluginAbstract
     /** @var string Website where to get more info for this plugin */
     protected $website;
 
-    /** @var string The prefix for the classes in this plugin */
-    protected $class_prefix = '\phpDocumentor\Plugin';
-
     /** @var string[] a list of listener classes to register */
     protected $listeners = array();
 
@@ -64,7 +61,7 @@ class Plugin extends PluginAbstract
      *
      * @return void
      */
-    public function load($path, $autoloader = null)
+    public function load($path)
     {
         if (preg_match('/^[a-zA-Z0-9\_]+$/', $path)) {
             $path = dirname(__FILE__) . DIRECTORY_SEPARATOR . $path;
@@ -72,9 +69,7 @@ class Plugin extends PluginAbstract
 
         $filename = rtrim($path, '/\\') . DIRECTORY_SEPARATOR . 'plugin.xml';
         if (!file_exists($filename)) {
-            throw new \InvalidArgumentException(
-                'No plugin configuration could be found at ' . $filename
-            );
+            throw new \InvalidArgumentException('No plugin configuration could be found at ' . $filename);
         }
         $xml = simplexml_load_file($filename);
 
@@ -84,42 +79,28 @@ class Plugin extends PluginAbstract
         $this->author       = $xml->author;
         $this->email        = $xml->email;
         $this->website      = $xml->website;
-        $this->class_prefix = isset($xml->class_prefix)
-            ? (string)$xml->class_prefix
-            : '';
-
-        if ($autoloader && $this->class_prefix) {
-            $autoloader->add($this->class_prefix, $path);
-        }
 
         $listeners = !is_array($xml->listener)
             ? $xml->listener
             : array($xml->listener);
 
         foreach ($listeners as $listener) {
-            $prefix = ($this->class_prefix) ? $this->class_prefix . '_' : '';
-            $class = $prefix . (string)$listener;
+            $class = (string)$listener;
             $this->listeners[] = new $class($this);
         }
 
-        $options = !is_array($xml->options)
-            ? $xml->options
-            : array($xml->options);
+        $options = !is_array($xml->options) ? $xml->options : array($xml->options);
 
         foreach ($options->option as $option) {
             $key = (string)$option['name'];
             $this->options[$key] = $option;
         }
 
-        $this->translate = new Translator();
-        $this->translate
-            ->setLocale('en')
-            ->setFallbackLocale('en')
-            ->addTranslationFilePattern(
-                'phparray',
-                $path . DIRECTORY_SEPARATOR . 'Messages',
-                '%s.php'
-            );
+        $this->getTranslator()->addTranslationFilePattern(
+            'phparray',
+            $path . DIRECTORY_SEPARATOR . 'Messages',
+            '%s.php'
+        );
     }
 
     /**

@@ -209,17 +209,20 @@ class Application extends Cilex
     protected function loadPlugins()
     {
         $app = $this;
-        $this['plugin_manager'] = $this->share(
+        $this['plugins'] = $this->share(
             function () use ($app) {
-                $manager = new \phpDocumentor\Plugin\Manager(
-                    $app['event_dispatcher'],
-                    $app['config'],
-                    $app['autoloader']
-                );
-                return $manager;
+                return new \phpDocumentor\Plugin\Collection();
             }
         );
-        $this['plugin_manager']->loadFromConfiguration();
+        $this['plugin_factory'] = $this->share(
+            function () use ($app) {
+                return new \phpDocumentor\Plugin\Factory($app['event_dispatcher'], $app['config']);
+            }
+        );
+        $this['plugins']->load(
+            $this['plugin_factory'],
+            isset($app['config']->plugins) ? $app['config']->plugins->plugin : array()
+        );
     }
 }
 

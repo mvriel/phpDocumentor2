@@ -34,7 +34,7 @@ class PluginAbstract
     protected $configuration = null;
 
     /** @var Translator Translation object */
-    protected $translate = null;
+    protected $translator = null;
 
     /**
      * Initialize this object with an Event Dispatcher and Configuration object.
@@ -46,14 +46,11 @@ class PluginAbstract
      * @param Translator                      $translator
      *     Translator object.
      */
-    public function __construct(
-        $event_dispatcher,
-        $configuration,
-        Translator $translator = null
-    ) {
+    public function __construct($event_dispatcher, $configuration, Translator $translator = null)
+    {
         $this->event_dispatcher = $event_dispatcher;
         $this->configuration    = $configuration;
-        $this->translate        = $translator;
+        $this->translator       = $translator;
     }
 
     /**
@@ -82,12 +79,11 @@ class PluginAbstract
 
         if (!$this->event_dispatcher instanceof \phpDocumentor\Event\Dispatcher) {
             throw new Exception(
-                'Expected the event dispatcher to be an instance of '
-                . 'phpDocumentor\Event\Dispatcher'
+                'Expected the event dispatcher to be an instance of phpDocumentor\Event\Dispatcher'
             );
         }
 
-        $this->event_dispatcher->dispatch($name, $event);
+        return $this->event_dispatcher->dispatch($name, $event);
     }
 
     /**
@@ -153,11 +149,11 @@ class PluginAbstract
      */
     public function _($message, $variables = array())
     {
-        if (!$this->translate) {
+        if (!$this->translator) {
             return vsprintf($message, $variables);
         }
 
-        return vsprintf($this->translate->translate($message), $variables);
+        return vsprintf($this->translator->translate($message), $variables);
     }
 
     /**
@@ -187,6 +183,6 @@ class PluginAbstract
      */
     public function getTranslator()
     {
-        return $this->translate;
+        return $this->translator;
     }
 }
