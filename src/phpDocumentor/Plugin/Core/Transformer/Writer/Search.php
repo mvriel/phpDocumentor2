@@ -13,6 +13,11 @@ namespace phpDocumentor\Plugin\Core\Transformer\Writer;
 
 use phpDocumentor\Transformer\Writer\WriterAbstract;
 use phpDocumentor\Transformer\Transformation;
+use phpDocumentor\Search\Engine\ElasticSearch;
+use phpDocumentor\Search\Engine\Configuration;
+use phpDocumentor\Search\Mapper;
+use \phpDocumentor\Search\Document;
+use Guzzle\Http\Client;
 
 /**
  * Search writer responsible for building the search index.
@@ -35,39 +40,83 @@ class Search extends WriterAbstract
                 $transformation->getTransformer()->getTarget() . DIRECTORY_SEPARATOR . $transformation->getArtifact()
             );
         } else {
-            $xpath = new \DOMXPath($structure);
-            $node_list = $xpath->query(
-                '/project/file/class|/project/file/interface|/project/file/trait|/project/file/function'
-                . '|/project/file/constant|/project/file/*/property|/project/file/*/method|/project/file/*/constant'
-            );
+            $engine    = $this->createElasticSearchEngine($transformation);
 
-            var_dump($transformation->getParameters());
+            $node_list = $this->discoverStructuralElementNodes($structure);
+            $mapper    = new Mapper($transformation->getParameter('mapping', array()));
 
-            $mapper = new \phpDocumentor\Search\Mapper(
-                array('description' => '{{data.docblock.description}}')
-            );
-
-            $configuration = new \phpDocumentor\Search\Engine\Configuration\ElasticSearch(new \Guzzle\Http\Client());
-            $engine = new \phpDocumentor\Search\Engine\ElasticSearch($configuration);
-
+            // persist all dom elements
             for ($i = 0; $i < $node_list->length; $i++) {
                 $document = $this->generateDocument($mapper, simplexml_import_dom($node_list->item($i)));
                 $engine->persist($document);
             }
 
-            $this->log('Sending data to ElasticSearch');
-//            $engine->flush();
+            // send the data to the search engine
+            $this->log('Sending data to the Search Engine');
+            $engine->flush();
         }
     }
 
-    protected function generateDocument(\phpDocumentor\Search\Mapper $mapper, \SimpleXMLElement $node)
+    /**
+     * Retrieves all nodes referring to structural elements from the AST.
+     *
+     * @param \DOMDocument $structure
+     *
+     * @return \DOMNodeList
+     */
+    protected function discoverStructuralElementNodes(\DOMDocument $structure)
     {
-        $document = new \phpDocumentor\Search\Document();
+        $xpath = new \DOMXPath($structure);
+        return $xpath->query(
+            '/project/file/class|/project/file/interface|/project/file/trait|/project/file/function'
+            . '|/project/file/constant|/project/file/*/property|/project/file/*/method|/project/file/*/constant'
+        );
+    }
+
+    /**
+     * Creates an instance of the ElasticSearch engine using parameters from the transformation.
+     *
+     * @param Transformation $transformation
+     *
+     * @return ElasticSearch
+     */
+    protected function createElasticSearchEngine(Transformation $transformation)
+    {
+        $configuration = new Configuration\ElasticSearch(
+            new Client(),
+            $transformation->getParameter('uri', 'http://localhost:9200')
+        );
+        $configuration->setIndex($transformation->getParameter('index', 'api'));
+        $configuration->setType($transformation->getParameter('type', 'documentation'));
+
+        // instantiate engine
+        return new ElasticSearch($configuration);
+    }
+
+    /**
+     * Populates a new document with data from the $node using the provided mapper.
+     *
+     * @param Mapper            $mapper
+     * @param \SimpleXMLElement $node
+     *
+     * @return Document
+     */
+    protected function generateDocument(Mapper $mapper, \SimpleXMLElement $node)
+    {
+        $document = new Document();
         $document->setId($this->generateFqsen($node));
         $mapper->populate($document, $node);
+
         return $document;
     }
 
+    /**
+     * Generates a FQSEN with the provided structural element node.
+     *
+     * @param \SimpleXMLElement $node
+     *
+     * @return string
+     */
     protected function generateFqsen(\SimpleXMLElement $node)
     {
         switch($node->getName()) {
@@ -119,65 +168,64 @@ class Search extends WriterAbstract
             foreach ($file->interface as $interface) {
                 $interface_node = $output->addChild('node');
                 $interface_node->value = (string)$interface->full_name;
-                $interface_node->id = $file['generated-path'] . '#' . $interface_node->value;
-                $interface_node->type = 'interface';
+                $interface_node->id    = $file['generated-path'] . '#' . $interface_node->value;
+                $interface_node->type  = 'interface';
 
                 foreach ($interface->constant as $constant) {
                     $node = $output->addChild('node');
                     $node->value = (string)$interface->full_name . '::' . (string)$constant->name;
-                    $node->id = $file['generated-path'] . '#' . $node->value;
-                    $node->type = 'constant';
+                    $node->id    = $file['generated-path'] . '#' . $node->value;
+                    $node->type  = 'constant';
                 }
 
                 foreach ($interface->property as $property) {
                     $node = $output->addChild('node');
                     $node->value = (string)$interface->full_name . '::' . (string)$property->name;
-                    $node->id = $file['generated-path'] . '#' . $node->value;
-                    $node->type = 'property';
+                    $node->id    = $file['generated-path'] . '#' . $node->value;
+                    $node->type  = 'property';
                 }
 
                 foreach ($interface->method as $method) {
                     $node = $output->addChild('node');
                     $node->value = (string)$interface->full_name . '::' . (string)$method->name . '()';
-                    $node->id = $file['generated-path'] . '#' . $node->value;
-                    $node->type = 'method';
+                    $node->id    = $file['generated-path'] . '#' . $node->value;
+                    $node->type  = 'method';
                 }
             }
 
             foreach ($file->class as $class) {
                 $class_node = $output->addChild('node');
                 $class_node->value = (string)$class->full_name;
-                $class_node->id = $file['generated-path'] . '#' . $class_node->value;
-                $class_node->type = 'class';
+                $class_node->id    = $file['generated-path'] . '#' . $class_node->value;
+                $class_node->type  = 'class';
 
                 foreach ($class->constant as $constant) {
                     $node = $output->addChild('node');
                     $node->value = (string)$class->full_name . '::' . (string)$constant->name;
-                    $node->id = $file['generated-path'] . '#' . $node->value;
-                    $node->type = 'constant';
+                    $node->id    = $file['generated-path'] . '#' . $node->value;
+                    $node->type  = 'constant';
                 }
 
                 foreach ($class->property as $property) {
                     $node = $output->addChild('node');
-                    $node->value = (string)$class->full_name . '::'
-                        . (string)$property->name;
-                    $node->id = $file['generated-path'] . '#' . $node->value;
-                    $node->type = 'property';
+                    $node->value = (string)$class->full_name . '::' . (string)$property->name;
+                    $node->id    = $file['generated-path'] . '#' . $node->value;
+                    $node->type  = 'property';
                 }
 
                 foreach ($class->method as $method) {
                     $node = $output->addChild('node');
                     $node->value = (string)$class->full_name . '::' . (string)$method->name . '()';
-                    $node->id = $file['generated-path'] . '#' . $node->value;
-                    $node->type = 'method';
+                    $node->id    = $file['generated-path'] . '#' . $node->value;
+                    $node->type  = 'method';
                 }
             }
 
             foreach ($file->constant as $constant) {
                 $node = $output->addChild('node');
                 $node->value = (string)$constant->name;
-                $node->id = $file['generated-path'] . '#::' . $node->value;
-                $node->type = 'constant';
+                $node->id    = $file['generated-path'] . '#::' . $node->value;
+                $node->type  = 'constant';
             }
 
             foreach ($file->function as $function) {
