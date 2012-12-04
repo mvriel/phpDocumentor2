@@ -8,7 +8,7 @@ class ElasticSearch
     protected $index = 'documentation';
     protected $type  = 'api';
 
-    public function __construct($http_client, $uri = 'http://localhost:9200')
+    public function __construct(\Guzzle\Http\Client $http_client, $uri = 'http://localhost:9200')
     {
         $this->setHttpClient($http_client);
         $this->setUri($uri);
@@ -44,15 +44,16 @@ class ElasticSearch
         return $this->uri;
     }
 
-    public function setHttpClient($http_client)
+    public function setHttpClient(\Guzzle\Http\Client $http_client)
     {
         $this->http_client = $http_client;
     }
 
+    /**
+     * @return \Guzzle\Http\Client
+     */
     public function getHttpClient()
     {
         return $this->http_client;
     }
-
-
 }

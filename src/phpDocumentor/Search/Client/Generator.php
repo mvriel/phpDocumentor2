@@ -1,0 +1,26 @@
+<?php
+namespace phpDocumentor\Search\Client;
+
+use \phpDocumentor\Search\Engine\EngineInterface;
+
+class Generator
+{
+    /** @var \Twig_Environment */
+    protected $twig;
+
+    public function __construct(\Twig_Environment $twig)
+    {
+        $this->twig = $twig;
+    }
+
+    public function generate(EngineInterface $engine)
+    {
+        $class_name_parts = explode('\\', get_class($engine));
+        $engine_type = $class_name_parts[count($class_name_parts)-1];
+
+        $this->twig->render(
+            file_get_contents(__DIR__.'/Templates/'.$engine_type.'.twig.php'),
+            array('configuration' => $engine->getConfiguration())
+        );
+    }
+}

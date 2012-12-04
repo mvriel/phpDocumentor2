@@ -17,9 +17,19 @@ class ElasticSearch implements EngineInterface
         $this->setConfiguration($configuration);
     }
 
-    public function findBy($criteria)
+    public function find($expression, $start = 0, $limit = 10)
     {
-        // TODO: Implement findBy() method.
+        $client = $this->getConfiguration()->getHttpClient();
+        $result = $client->get($this->getBaseUrl() . '/_search?q=' . $expression);
+
+        $results = array();
+        foreach ($result->hits->hits as $hit) {
+            $document = new Document(json_decode($hit->_source, false));
+            $document->setId($hit->_id);
+            $results[] = $document;
+        }
+
+        return $results;
     }
 
     public function persist(Document $document)
@@ -39,18 +49,10 @@ class ElasticSearch implements EngineInterface
     public function flush()
     {
         $client = $this->getConfiguration()->getHttpClient();
-        $base_url = implode(
-            '/',
-            array(
-                $this->getConfiguration()->getUri(),
-                $this->getConfiguration()->getIndex(),
-                $this->getConfiguration()->getType()
-            )
-        );
+        $base_url = $this->getBaseUrl();
 
         /** @var Document $document */
         foreach ($this->updates as $document) {
-
             try {
                 $client
                     ->put(
@@ -70,8 +72,20 @@ class ElasticSearch implements EngineInterface
         }
 
         foreach ($this->removals as $document) {
-            $client->delete('documentation/2-2-en/' . $document->getId());
+            $client->delete($base_url . '/' . $document->getId());
         }
+    }
+
+    protected function getBaseUrl()
+    {
+        return implode(
+            '/',
+            array(
+                $this->getConfiguration()->getUri(),
+                $this->getConfiguration()->getIndex(),
+                $this->getConfiguration()->getType()
+            )
+        );
     }
 
     protected function convert(Document $document)

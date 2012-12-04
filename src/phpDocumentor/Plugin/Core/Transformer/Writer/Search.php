@@ -16,7 +16,7 @@ use phpDocumentor\Transformer\Transformation;
 use phpDocumentor\Search\Engine\ElasticSearch;
 use phpDocumentor\Search\Engine\Configuration;
 use phpDocumentor\Search\Mapper;
-use \phpDocumentor\Search\Document;
+use phpDocumentor\Search\Document;
 use Guzzle\Http\Client;
 
 /**
