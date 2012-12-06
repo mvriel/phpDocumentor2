@@ -1,8 +1,10 @@
 <?php
+$query = isset($_GET['q']) ? 'q=' . urlencode($_GET['q']) : '';
 $search_results = json_decode(
     file_get_contents(
-        '{{configuration.uri}}/{{configuration.index}}/{{configuration.type}}/_search?q='.urlencode($_GET['q'])
-    )
+        '{{configuration.uri}}/{{configuration.index}}/{{configuration.type}}/_search?'.$query
+    ),
+    true
 );
 
 $results = array();

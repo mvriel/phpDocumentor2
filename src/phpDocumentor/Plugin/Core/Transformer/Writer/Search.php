@@ -40,7 +40,7 @@ class Search extends WriterAbstract
                 $transformation->getTransformer()->getTarget() . DIRECTORY_SEPARATOR . $transformation->getArtifact()
             );
         } else {
-            $engine    = $this->createElasticSearchEngine($transformation);
+            $engine = $this->createElasticSearchEngine($transformation);
 
             $node_list = $this->discoverStructuralElementNodes($structure);
             $mapper    = new Mapper($transformation->getParameter('mapping', array()));
@@ -53,7 +53,17 @@ class Search extends WriterAbstract
 
             // send the data to the search engine
             $this->log('Sending data to the Search Engine');
-            $engine->flush();
+//            $engine->flush();
+
+            // generate the client in the target location
+            $this->log('Generating client');
+
+            $twig = new \Twig_Environment();
+            $generator = new \phpDocumentor\Search\Client\Generator($twig);
+            file_put_contents(
+                $transformation->getTransformer()->getTarget() . DIRECTORY_SEPARATOR . 'search.php',
+                $generator->generate($engine)
+            );
         }
     }
 
