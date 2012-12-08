@@ -1,5 +1,5 @@
 {
-    "hash": "16512bbbf016380db82998cd3f607189",
+    "hash": "75fda79d15c7737084e7e0291696533a",
     "packages": [
         {
             "name": "cilex/cilex",
@@ -43,7 +43,6 @@
                     "Cilex": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -79,13 +78,12 @@
             },
             "time": "2012-01-15 19:36:37",
             "type": "library",
-            "installation-source": "dist",
+            "installation-source": "source",
             "autoload": {
                 "psr-0": {
                     "dflydev\\markdown": "src"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "New BSD License"
             ],
@@ -140,7 +138,6 @@
                     "PHPParser": "lib/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -165,7 +162,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/phpDocumentor/Fileset/archive/1.0.0-beta2.zip",
+                "url": "https://github.com/phpDocumentor/Fileset/zipball/1.0.0-beta2",
                 "reference": "1.0.0-beta2",
                 "shasum": ""
             },
@@ -173,7 +170,7 @@
                 "php": ">=5.3.3",
                 "symfony/finder": "2.*"
             },
-            "time": "2012-06-04 10:49:45",
+            "time": "2012-06-04 17:49:45",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -181,7 +178,6 @@
                     "": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -210,7 +206,7 @@
             "require": {
                 "php": ">=5.3.2"
             },
-            "time": "2012-04-06 09:56:51",
+            "time": "2012-04-06 16:56:51",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -218,7 +214,6 @@
                     "phpDocumentor": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -231,31 +226,30 @@
         },
         {
             "name": "phpdocumentor/plugin-twig",
-            "version": "1.0.0",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpDocumentor/plugin-twig.git",
-                "reference": "1.0.0"
+                "reference": "7510c538b9fd119fdc57b0a48ef0c140b615c017"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/phpDocumentor/plugin-twig/zipball/1.0.0",
-                "reference": "1.0.0",
+                "url": "https://github.com/phpDocumentor/plugin-twig/archive/7510c538b9fd119fdc57b0a48ef0c140b615c017.zip",
+                "reference": "7510c538b9fd119fdc57b0a48ef0c140b615c017",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.3",
                 "twig/twig": ">=1.8,<2.0-dev"
             },
-            "time": "2012-07-08 11:11:16",
+            "time": "2012-09-07 19:35:52",
             "type": "phpdocumentor-plugin",
-            "installation-source": "dist",
+            "installation-source": "source",
             "autoload": {
                 "psr-0": {
                     "phpDocumentor": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -305,7 +299,6 @@
                     ]
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -349,7 +342,6 @@
                     ]
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -378,10 +370,9 @@
                 "ext-xsl": "*",
                 "phpdocumentor/unified-asset-installer": "1.*"
             },
-            "time": "2012-08-14 12:55:19",
+            "time": "2012-08-14 19:55:19",
             "type": "phpdocumentor-template",
             "installation-source": "dist",
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -411,10 +402,9 @@
                 "ext-xsl": "*",
                 "phpdocumentor/unified-asset-installer": "1.*"
             },
-            "time": "2012-08-14 13:16:25",
+            "time": "2012-08-14 20:16:25",
             "type": "phpdocumentor-template",
             "installation-source": "dist",
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -448,7 +438,6 @@
             "time": "2012-09-16 07:11:08",
             "type": "phpdocumentor-template",
             "installation-source": "dist",
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -478,10 +467,9 @@
                 "ext-xsl": "*",
                 "phpdocumentor/unified-asset-installer": "1.*"
             },
-            "time": "2012-08-24 13:05:33",
+            "time": "2012-08-24 20:05:33",
             "type": "phpdocumentor-template",
             "installation-source": "dist",
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -514,7 +502,6 @@
             "time": "2012-11-01 17:12:42",
             "type": "phpdocumentor-template",
             "installation-source": "dist",
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -545,10 +532,9 @@
                 "phpdocumentor/unified-asset-installer": "1.*",
                 "phpdocumentor/template-abstract": "1.*"
             },
-            "time": "2012-07-07 12:53:47",
+            "time": "2012-07-07 19:53:47",
             "type": "phpdocumentor-template",
             "installation-source": "dist",
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -577,7 +563,7 @@
                 "reference": "1.0.1-beta4",
                 "shasum": ""
             },
-            "time": "2012-05-08 11:26:46",
+            "time": "2012-05-08 18:26:46",
             "type": "composer-installer",
             "extra": {
                 "class": "\\phpDocumentor\\Composer\\UnifiedAssetInstaller"
@@ -588,7 +574,6 @@
                     "phpDocumentor\\Composer": "src/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -625,13 +610,12 @@
                     "dev-master": "1.0.x-dev"
                 }
             },
-            "installation-source": "dist",
+            "installation-source": "source",
             "autoload": {
                 "psr-0": {
                     "Pimple": "lib/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -673,13 +657,12 @@
                     "dev-master": "2.1-dev"
                 }
             },
-            "installation-source": "dist",
+            "installation-source": "source",
             "autoload": {
                 "psr-0": {
                     "Symfony\\Component\\Console": ""
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -734,7 +717,6 @@
                     "Symfony\\Component\\EventDispatcher": ""
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -776,13 +758,12 @@
                     "dev-master": "2.1-dev"
                 }
             },
-            "installation-source": "dist",
+            "installation-source": "source",
             "autoload": {
                 "psr-0": {
                     "Symfony\\Component\\Finder": ""
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -824,13 +805,12 @@
                     "dev-master": "2.1-dev"
                 }
             },
-            "installation-source": "dist",
+            "installation-source": "source",
             "autoload": {
                 "psr-0": {
                     "Symfony\\Component\\Process": ""
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -845,6 +825,53 @@
                 }
             ],
             "description": "Symfony Process Component",
+            "homepage": "http://symfony.com"
+        },
+        {
+            "name": "symfony/serializer",
+            "version": "dev-master",
+            "target-dir": "Symfony/Component/Serializer",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/Serializer",
+                "reference": "60abc7e72a5198192c42fc07bb8c1e3082e7229e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://github.com/symfony/Serializer/archive/60abc7e72a5198192c42fc07bb8c1e3082e7229e.zip",
+                "reference": "60abc7e72a5198192c42fc07bb8c1e3082e7229e",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "time": "2012-11-17 17:07:16",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.2-dev"
+                }
+            },
+            "installation-source": "source",
+            "autoload": {
+                "psr-0": {
+                    "Symfony\\Component\\Serializer\\": ""
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "http://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony Serializer Component",
             "homepage": "http://symfony.com"
         },
         {
@@ -871,13 +898,12 @@
                     "dev-master": "1.11-dev"
                 }
             },
-            "installation-source": "dist",
+            "installation-source": "source",
             "autoload": {
                 "psr-0": {
                     "Twig_": "lib/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "BSD-3"
             ],
@@ -1099,14 +1125,16 @@
     "aliases": [
 
     ],
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "stability-flags": {
         "cilex/cilex": 20,
         "nikic/php-parser": 20,
         "symfony/event-dispatcher": 0,
+        "symfony/serializer": 20,
         "phpdocumentor/graphviz": 10,
         "phpdocumentor/fileset": 10,
         "phpdocumentor/reflection-docblock": 15,
+        "phpdocumentor/plugin-twig": 20,
         "phpdocumentor/unified-asset-installer": 10,
         "behat/behat": 0,
         "phpunit/phpunit": 0,
