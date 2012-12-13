@@ -474,7 +474,7 @@ class Parser extends ParserAbstract
     {
         $timer = microtime(true);
 
-        $this->exporter = new \phpDocumentor\Parser\Exporter\Ast\Ast($this);
+        $this->exporter = new \phpDocumentor\Parser\Exporter\Xml\Xml($this);
         $this->exporter->initialize();
 
         $paths = $files->getFilenames();
