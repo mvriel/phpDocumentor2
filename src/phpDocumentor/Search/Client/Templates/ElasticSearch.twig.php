@@ -9,7 +9,7 @@ $search_results = json_decode(
 
 $results = array();
 foreach ($search_results as $key => $result) {
-    $results[$result->_id] = $result->_source->url;
+    $results[$result->_id] = $result->_source;
     unset($search_results[$key]);
 }
 
