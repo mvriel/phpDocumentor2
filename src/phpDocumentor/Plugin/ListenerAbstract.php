@@ -35,9 +35,6 @@ abstract class ListenerAbstract extends PluginAbstract
         $this->plugin = $plugin;
 
         parent::__construct($plugin->getEventDispatcher(), $plugin->getConfiguration(), $plugin->getTranslator());
-
-        $this->configure();
-        $this->connectHooksToDispatcher();
     }
 
     /**
@@ -51,7 +48,7 @@ abstract class ListenerAbstract extends PluginAbstract
      *
      * @return void
      */
-    protected function configure()
+    public function configure()
     {
     }
 
@@ -68,9 +65,9 @@ abstract class ListenerAbstract extends PluginAbstract
      *
      * @return void
      */
-    protected function connectHooksToDispatcher()
+    public function connectHooksToDispatcher()
     {
-        $refl = new \ReflectionObject($this);
+        $refl = $this->reflect();
 
         // connect all events of the each method to the event_dispatcher
         /** @var \ReflectionMethod $method */
@@ -91,5 +88,15 @@ abstract class ListenerAbstract extends PluginAbstract
                 );
             }
         }
+    }
+
+    /**
+     * Reflects the current object and returns the data.
+     *
+     * @return \ReflectionObject
+     */
+    protected function reflect()
+    {
+        return new \ReflectionObject($this);
     }
 }

@@ -35,17 +35,18 @@
         "phpdocumentor/template-new-black": "1.*",
         "phpdocumentor/template-zend": "1.*",
         "phpdocumentor/template-old-ocean": "1.*",
-        "phpdocumentor/template-checkstyle": "1.*"
+        "phpdocumentor/template-checkstyle": "1.*",
     },
-    "suggests": {
-        "ext-xsl": "to use the XSL based templates"
-    },
-    "minimum-version": "dev",
     "require-dev": {
         "behat/behat": ">=2.4@stable",
         "phpunit/phpunit": "3.7.*@stable",
         "mockery/mockery": ">=0.7.0@stable"
+        "zendframework/zend-cache": "2.*"
     },
+    "suggests":{
+        "ext-xsl":"to use the XSL based templates"
+    },
+    "minimum-version":"dev",
     "config": {
         "bin-dir":"bin/"
     },

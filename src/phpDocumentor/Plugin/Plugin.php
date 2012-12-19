@@ -86,7 +86,12 @@ class Plugin extends PluginAbstract
 
         foreach ($listeners as $listener) {
             $class = (string)$listener;
-            $this->listeners[] = new $class($this);
+
+            /** @var \phpDocumentor\Plugin\Core\Listener $listener_object  */
+            $listener_object = new $class($this);
+            $listener_object->configure();
+            $listener_object->connectHooksToDispatcher();
+            $this->listeners[] = $listener_object;
         }
 
         $options = !is_array($xml->options) ? $xml->options : array($xml->options);
