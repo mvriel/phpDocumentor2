@@ -1,5 +1,5 @@
 {
-    "hash": "16512bbbf016380db82998cd3f607189",
+    "hash": "248f8ef7ea988842c75a43fdd3bb3018",
     "packages": [
         {
             "name": "cilex/cilex",
@@ -265,29 +265,29 @@
         },
         {
             "name": "phpdocumentor/reflection",
-            "version": "0.1.2",
+            "version": "0.1.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpDocumentor/Reflection",
-                "reference": "0.1.2"
+                "reference": "0.1.3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/phpDocumentor/Reflection/archive/0.1.2.zip",
-                "reference": "0.1.2",
+                "url": "https://github.com/phpDocumentor/Reflection/archive/0.1.3.zip",
+                "reference": "0.1.3",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.3",
                 "nikic/php-parser": "dev-master",
-                "phpdocumentor/reflection-docblock": "2.0.0a1"
+                "phpdocumentor/reflection-docblock": "2.0.0a2"
             },
             "require-dev": {
                 "behat/behat": ">=2.4@stable",
                 "phpunit/phpunit": "3.7.*@stable",
                 "mockery/mockery": ">=0.7.0@stable"
             },
-            "time": "2012-12-22 16:40:20",
+            "time": "2012-12-22 19:11:10",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -314,26 +314,26 @@
         },
         {
             "name": "phpdocumentor/reflection-docblock",
-            "version": "2.0.0a1",
+            "version": "2.0.0a2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpDocumentor/ReflectionDocBlock",
-                "reference": "2.0.0a1"
+                "reference": "2.0.0a2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/phpDocumentor/ReflectionDocBlock/archive/2.0.0a1.zip",
-                "reference": "2.0.0a1",
+                "url": "https://github.com/phpDocumentor/ReflectionDocBlock/archive/2.0.0a2.zip",
+                "reference": "2.0.0a2",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.3.2",
+                "php": ">=5.3.3",
                 "dflydev/markdown": "1.0.*"
             },
             "require-dev": {
-                "phpunit/phpunit": "*@stable"
+                "phpunit/phpunit": "3.7.*@stable"
             },
-            "time": "2012-11-27 17:52:28",
+            "time": "2012-12-02 20:26:45",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -343,6 +343,7 @@
                     ]
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -1814,7 +1815,7 @@
         "symfony/event-dispatcher": 0,
         "phpdocumentor/graphviz": 10,
         "phpdocumentor/fileset": 10,
-        "phpdocumentor/reflection-docblock": 15,
+        "phpdocumentor/reflection-docblock": 20,
         "phpdocumentor/unified-asset-installer": 10,
         "behat/behat": 0,
         "phpunit/phpunit": 0,

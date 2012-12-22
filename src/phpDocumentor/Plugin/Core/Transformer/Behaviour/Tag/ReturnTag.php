@@ -29,7 +29,7 @@ namespace phpDocumentor\Plugin\Core\Transformer\Behaviour\Tag;
 class ReturnTag extends \phpDocumentor\Transformer\Behaviour\BehaviourAbstract
 {
     /**
-     * Find all return tags that contain 'self' or '$this' and replace those
+     * Find all return tags that contain 'static' or '$this' and replace those
      * terms for the name of the current class' type.
      *
      * @param \DOMDocument $xml Structure source to apply behaviour onto.
@@ -38,16 +38,16 @@ class ReturnTag extends \phpDocumentor\Transformer\Behaviour\BehaviourAbstract
      */
     public function process(\DOMDocument $xml)
     {
-        $ignoreQry = '//tag[@name=\'return\' and @type=\'self\']'
+        $ignoreQry = '//tag[@name=\'return\' and @type=\'static\']'
             . '|//tag[@name=\'return\' and @type=\'$this\']'
-            . '|//tag[@name=\'return\']/type[.=\'self\']'
+            . '|//tag[@name=\'return\']/type[.=\'static\']'
             . '|//tag[@name=\'return\']/type[.=\'$this\']';
 
         $xpath = new \DOMXPath($xml);
         $nodes = $xpath->query($ignoreQry);
 
         $this->log(
-            'Transforming `self` and `$this` statements for @return tags, found: '
+            'Transforming `static` and `$this` statements for @return tags, found: '
             . $nodes->length
         );
 
@@ -68,7 +68,7 @@ class ReturnTag extends \phpDocumentor\Transformer\Behaviour\BehaviourAbstract
             // if the method is not a method but a global function: error!
             if ($method->nodeName != 'method') {
                 $this->log(
-                    'Global function ' . $method_name . ' contains a reference to self or $self',
+                    'Global function ' . $method_name . ' contains a reference to static or $static',
                     \phpDocumentor\Plugin\Core\Log::ERR
                 );
                 continue;
@@ -78,7 +78,7 @@ class ReturnTag extends \phpDocumentor\Transformer\Behaviour\BehaviourAbstract
                 ->item(0)->nodeValue;
 
             // nodes with name type need to set their content; otherwise we set
-            // an attribute of the class itself
+            // an attribute of the class itstatic
             if ($node->nodeName == 'type') {
                 $node->nodeValue = $type;
 
@@ -98,7 +98,7 @@ class ReturnTag extends \phpDocumentor\Transformer\Behaviour\BehaviourAbstract
 
             // check if an excerpt is set and override that as well
             if ($node->hasAttribute('excerpt')
-                && (($node->getAttribute('excerpt') == 'self')
+                && (($node->getAttribute('excerpt') == 'static')
                 || ($node->getAttribute('excerpt') == '$this'))
             ) {
                 $node->setAttribute('excerpt', $type);

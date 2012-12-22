@@ -15,7 +15,9 @@
 
 namespace phpDocumentor\Plugin\Core\Parser\DocBlock\Tag\Definition;
 
-use \phpDocumentor\Parser\ParserAbstract;
+use phpDocumentor\Parser\ParserAbstract;
+use phpDocumentor\Reflection\DocBlock\Type\Collection;
+use phpDocumentor\Reflection\DocBlock\Context;
 
 /**
  * Generic Definition which adds the basic tag information to the structure file.
@@ -29,7 +31,7 @@ use \phpDocumentor\Parser\ParserAbstract;
  */
 class Definition extends ParserAbstract
 {
-    /** @var \DOMEelement */
+    /** @var \DOMElement */
     protected $xml = null;
 
     /** @var \phpDocumentor\Reflection\DocBlock\Tag */
@@ -300,15 +302,17 @@ class Definition extends ParserAbstract
      */
     public function setTypes($types)
     {
+        $types = new Collection($types, new Context($this->getNamespace(), $this->getNamespaceAliases()));
+
         foreach ($types as $type) {
             if ($type == '') {
                 continue;
             }
 
-            $type = trim($this->expandType($type));
-
             // strip ampersands
             $name = str_replace('&', '', $type);
+
+            /** @var \DOMElement $type_object  */
             $type_object = $this->xml->appendChild(
                 new \DOMElement('type', $name)
             );
@@ -321,86 +325,7 @@ class Definition extends ParserAbstract
             );
         }
 
-        $this->xml->setAttribute('type', $this->expandType($this->tag->getType()));
-    }
-
-    /**
-     * Tries to expand a type to it's full namespaced equivalent.
-     *
-     * @param string $type               Type to expand into full namespaced
-     *  equivalent.
-     * @param bool   $ignore_non_objects whether to ignore reserved words, when
-     *  false it will not expand a set of keywords.
-     *
-     * @return string
-     */
-    protected function expandType($type, $ignore_non_objects = false)
-    {
-        if ($type === null) {
-            return null;
-        }
-
-        $non_objects = array();
-        if (!$ignore_non_objects) {
-            $non_objects = array(
-                'string', 'int', 'integer', 'bool', 'boolean', 'float', 'double',
-                'object', 'mixed', 'array', 'resource', 'void', 'null',
-                'callback', 'false', 'true', 'self', '$this', 'callable'
-            );
-        }
-        $namespace = $this->getNamespace() == 'default'
-                ? ''
-                : $this->getNamespace() . '\\';
-
-        $type = explode('|', $type);
-        foreach ($type as &$item) {
-            $item = trim($item);
-
-            // add support for array notation
-            $is_array = false;
-            if (substr($item, -2) == '[]') {
-                $item = substr($item, 0, -2);
-                $is_array = true;
-            }
-
-            if ((substr($item, 0, 1) != '\\')
-                && (!in_array(strtolower($item), $non_objects))
-            ) {
-                $type_parts = explode('\\', $item);
-
-                // if the first part is the keyword 'namespace', replace it
-                // with the current namespace
-                if ($type_parts[0] == 'namespace') {
-                    $type_parts[0] = $this->getNamespace();
-                    $item = implode('\\', $type_parts);
-                }
-
-                // if the first segment is an alias; replace with full name
-                if (isset($this->namespace_aliases[$type_parts[0]])) {
-                    $type_parts[0] = $this->namespace_aliases[$type_parts[0]];
-
-                    $item = implode('\\', $type_parts);
-                } elseif (count($type_parts) == 1) {
-                    // prefix the item with the namespace if there is only one
-                    // part and no alias
-                    $item = $namespace . $item;
-                }
-            }
-
-            // full paths always start with a slash
-            if (isset($item[0]) && ($item[0] !== '\\')
-                && (!in_array(strtolower($item), $non_objects))
-            ) {
-                $item = '\\' . $item;
-            }
-
-            // re-add the array notation markers
-            if ($is_array) {
-                $item .= '[]';
-            }
-        }
-
-        return implode('|', $type);
+        $this->xml->setAttribute('type', (string)$types);
     }
 
     /**
