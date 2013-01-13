@@ -12,4 +12,5 @@ For template-builders
    for-template-builders/introduction
    for-template-builders/getting-started
    for-template-builders/configuration
+   for-template-builders/defining-urls
    for-template-builders/writers
