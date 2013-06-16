@@ -1,3 +1,10 @@
+2013/06/?: Version 2.0.0b5
+---------------------------
+
+```
+FIXED      Files could not be written in Windows due to slashes
+```
+
 2013/06/16: Version 2.0.0b4
 ---------------------------
 
