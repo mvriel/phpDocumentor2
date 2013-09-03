@@ -11,10 +11,11 @@
  */
 namespace phpDocumentor\Command\Project;
 
-use \Symfony\Component\Console\Input\InputInterface;
-use \Symfony\Component\Console\Input\InputOption;
-use \Symfony\Component\Console\Output\OutputInterface;
-use \Symfony\Component\Console\Input\ArrayInput;
+use phpDocumentor\Command\ConfigurableCommand;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Parse and transform the given directory (-d|-f) to the given location (-t).
@@ -33,7 +34,7 @@ use \Symfony\Component\Console\Input\ArrayInput;
  * present. In the configuration file can you specify the same settings (and
  * more) as the command line provides.
  */
-class RunCommand extends \phpDocumentor\Command\ConfigurableCommand
+class RunCommand extends ConfigurableCommand
 {
     /**
      * Initializes this command and sets the name, description, options and
@@ -146,8 +147,7 @@ HELP
                 'markers',
                 'm',
                 InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY,
-                'Comma-separated list of markers/tags to filter',
-                array('TODO', 'FIXME')
+                'Comma-separated list of markers/tags to filter'
             )
             ->addOption(
                 'title',
@@ -226,24 +226,26 @@ HELP
 
         $parse_input = new ArrayInput(
             array(
-                'command' => 'project:parse',
-                '--target' => $input->getOption('target'),
-                '--filename' => $input->getOption('filename'),
-                '--directory' => $input->getOption('directory'),
-                '--encoding' => $input->getOption('encoding'),
-                '--extensions' => $input->getOption('extensions'),
-                '--ignore' => $input->getOption('ignore'),
-                '--ignore-tags' => $input->getOption('ignore-tags'),
-                '--hidden' => $input->getOption('hidden'),
-                '--ignore-symlinks' => $input->getOption('ignore-symlinks'),
-                '--markers' => $input->getOption('markers'),
-                '--title' => $input->getOption('title'),
-                '--force' => $input->getOption('force'),
-                '--validate' => $input->getOption('validate'),
-                '--visibility' => $input->getOption('visibility'),
-                '--defaultpackagename' => $input->getOption('defaultpackagename'),
-                '--sourcecode' => $input->getOption('sourcecode'),
-                '--progressbar' => $input->getOption('progressbar')
+                 'command'              => 'project:parse',
+                 '--filename'           => $input->getOption('filename'),
+                 '--directory'          => $input->getOption('directory'),
+                 '--encoding'           => $input->getOption('encoding'),
+                 '--extensions'         => $input->getOption('extensions'),
+                 '--ignore'             => $input->getOption('ignore'),
+                 '--ignore-tags'        => $input->getOption('ignore-tags'),
+                 '--hidden'             => $input->getOption('hidden'),
+                 '--ignore-symlinks'    => $input->getOption('ignore-symlinks'),
+                 '--markers'            => $input->getOption('markers'),
+                 '--title'              => $input->getOption('title'),
+                 '--target'             => $input->getOption('target'),
+                 '--force'              => $input->getOption('force'),
+                 '--validate'           => $input->getOption('validate'),
+                 '--visibility'         => $input->getOption('visibility'),
+                 '--defaultpackagename' => $input->getOption('defaultpackagename'),
+                 '--sourcecode'         => $input->getOption('sourcecode'),
+                 '--parseprivate'       => $input->getOption('parseprivate'),
+                 '--progressbar'        => $input->getOption('progressbar'),
+                 '--log'                => $input->getOption('log')
             ),
             $this->getDefinition()
         );
@@ -253,19 +255,14 @@ HELP
             return $return_code;
         }
 
-        $target = $input->getOption('target');
-        if (!is_null($target) && !is_dir($target)) {
-            $target = dirname($target);
-        }
-
         $transform_input = new ArrayInput(
             array(
-                'command' => 'project:transform',
-                '--source' => $input->getOption('target'),
-                '--target' => $target,
-                '--template' => $input->getOption('template'),
-                '--parseprivate' => $input->getOption('parseprivate'),
-                '--progressbar' => $input->getOption('progressbar')
+                 'command'       => 'project:transform',
+                 '--source'      => $input->getOption('target'),
+                 '--target'      => $input->getOption('target'),
+                 '--template'    => $input->getOption('template'),
+                 '--progressbar' => $input->getOption('progressbar'),
+                 '--log'         => $input->getOption('log')
             )
         );
         $return_code = $transform_command->run($transform_input, $output);

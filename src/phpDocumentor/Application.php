@@ -2,110 +2,91 @@
 /**
  * phpDocumentor
  *
- * PHP Version 5
+ * PHP Version 5.3
  *
- * @author    Mike van Riel <mike.vanriel@naenius.com>
- * @copyright 2010-2011 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
 
 namespace phpDocumentor;
 
+use Cilex\Application as Cilex;
+use Cilex\Provider\MonologServiceProvider;
+use Cilex\Provider\ValidatorServiceProvider;
+use Doctrine\Common\Annotations\AnnotationRegistry;
+use JMS\Serializer\SerializerBuilder;
+use Monolog\ErrorHandler;
+use Monolog\Handler\NullHandler;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
+use phpDocumentor\Command\Helper\LoggerHelper;
+use phpDocumentor\Console\Input\ArgvInput;
+use Symfony\Component\Console\Application as ConsoleApplication;
+use Symfony\Component\Console\Helper\ProgressHelper;
+use Symfony\Component\Console\Shell;
+use Zend\Config\Factory;
+
 /**
  * Finds and activates the autoloader.
  */
 require_once findAutoloader();
 
-use Symfony\Component\Console\Input\InputInterface;
-use Cilex\Application as Cilex;
-use Cilex\Provider\MonologServiceProvider;
-
 /**
  * Application class for phpDocumentor.
  *
  * Can be used as bootstrap when the run method is not invoked.
- *
- * @author  Mike van Riel <mike.vanriel@naenius.com>
- * @license http://www.opensource.org/licenses/mit-license.php MIT
- * @link    http://phpdoc.org
  */
 class Application extends Cilex
 {
-    const VERSION = '2.0.0a12';
+    /** @var string $VERSION represents the version of phpDocumentor as stored in /VERSION */
+    public static $VERSION;
 
     /**
      * Initializes all components used by phpDocumentor.
      */
     public function __construct()
     {
-        parent::__construct('phpDocumentor', self::VERSION);
+        ini_set('memory_limit', -1);
+
+        self::$VERSION = file_get_contents(__DIR__ . '/../../VERSION');
+
+        parent::__construct('phpDocumentor', self::$VERSION);
+
+        $this['kernel.timer.start'] = time();
 
         $this->addAutoloader();
+        $this->addConfiguration();
         $this->addLogging();
         $this->setTimezone();
-        $this->addConfiguration();
         $this->addEventDispatcher();
-        $this->loadPlugins();
+        $this->addTranslator();
 
-        $this['console']->getHelperSet()->set(
-            new \phpDocumentor\Console\Helper\ProgressHelper()
+        /** @var ConsoleApplication $console */
+        $console = $this['console'];
+        $console->getHelperSet()->set(new LoggerHelper());
+
+        $this['translator.locale'] = 'en';
+        $this['translator'] = $this->share(
+            function ($app) {
+                $translator = new Translator();
+                $translator->setLocale($app['translator.locale']);
+
+                return $translator;
+            }
         );
 
+        $this->addSerializer();
+
+        $this->register(new ValidatorServiceProvider());
+        $this->register(new Descriptor\ServiceProvider());
+        $this->register(new Parser\ServiceProvider());
+        $this->register(new Transformer\ServiceProvider());
+
+        // TODO: make plugin service provider calls registrable from config
+        $this->register(new Plugin\Core\ServiceProvider());
+
         $this->addCommandsForProjectNamespace();
-        $this->addCommandsForTemplateNamespace();
-        $this->addCommandsForTemplateNamespace();
-    }
-
-    /**
-     * Run the application and if no command is provided, use project:run.
-     *
-     * @param bool $interactive Whether to run in interactive mode.
-     *
-     * @return void
-     */
-    public function run($interactive = false)
-    {
-        $app = $this['console'];
-        if ($interactive) {
-            $app = new \Symfony\Component\Console\Shell($app);
-        }
-
-        $app->run(new \phpDocumentor\Console\Input\ArgvInput());
-    }
-
-    /**
-     * Adds the command to phpDocumentor that belong to the Project namespace.
-     *
-     * @return void
-     */
-    protected function addCommandsForProjectNamespace()
-    {
-        $this->command(new \phpDocumentor\Command\Project\ParseCommand());
-        $this->command(new \phpDocumentor\Command\Project\RunCommand());
-        $this->command(new \phpDocumentor\Command\Project\TransformCommand());
-    }
-
-    /**
-     * Adds the command to phpDocumentor that belong to the plugin namespace.
-     *
-     * @return void
-     */
-    protected function addCommandsForPluginNamespace()
-    {
-        $this->command(new \phpDocumentor\Command\Plugin\GenerateCommand());
-    }
-
-    /**
-     * Adds the command to phpDocumentor that belong to the Template namespace.
-     *
-     * @return void
-     */
-    protected function addCommandsForTemplateNamespace()
-    {
-        $this->command(new \phpDocumentor\Command\Template\GenerateCommand());
-        $this->command(new \phpDocumentor\Command\Template\ListCommand());
-        $this->command(new \phpDocumentor\Command\Template\PackageCommand());
     }
 
     /**
@@ -128,10 +109,110 @@ class Application extends Cilex
         $this->register(
             new MonologServiceProvider(),
             array(
-                'monolog.name'    => 'phpDocumentor',
-                'monolog.logfile' => sys_get_temp_dir().'/phpdoc.log'
+                 'monolog.name'      => 'phpDocumentor',
+                 'monolog.logfile'   => sys_get_temp_dir() . '/phpdoc.log',
+                 'monolog.debugfile' => sys_get_temp_dir() . '/phpdoc.debug.log',
+                 'monolog.level'     => Logger::INFO,
             )
         );
+
+        $app = $this;
+        $this['monolog.configure'] = $this->protect(
+            function ($log) use ($app) {
+                $level = (string)$app['config']->logging->level;
+
+                // null means the default is used
+                $logPath = isset($app['config']->logging->paths->default)
+                    ? (string) $app['config']->logging->paths->default
+                    : null;
+
+                // null means the default is used
+                $debugPath = isset($app['config']->logging->paths->errors)
+                    ? (string) $app['config']->logging->paths->errors
+                    : null;
+
+                $app->configureLogger($log, $level, $logPath,$debugPath);
+            }
+        );
+        ErrorHandler::register($this['monolog']);
+    }
+
+    /**
+     * Removes all logging handlers and replaces them with handlers that can write to the given logPath and level.
+     *
+     * @param Logger  $logger       The logger instance that needs to be configured.
+     * @param integer $level        The minimum level that will be written to the normal logfile; matches one of the
+     *                              constants in {@see \Monolog\Logger}.
+     * @param string  $logPath      The full path where the normal log file needs to be written.
+     *
+     * @return void
+     */
+    public function configureLogger($logger, $level, $logPath = null)
+    {
+        /** @var Logger $monolog */
+        $monolog = $logger;
+
+        switch($level) {
+            case 'emergency':
+            case 'emerg':
+                $level = Logger::EMERGENCY;
+                break;
+            case 'alert':
+                $level = Logger::ALERT;
+                break;
+            case 'critical':
+            case 'crit':
+                $level = Logger::CRITICAL;
+                break;
+            case 'error':
+            case 'err':
+                $level = Logger::ERROR;
+                break;
+            case 'warning':
+            case 'warn':
+                $level = Logger::WARNING;
+                break;
+            case 'notice':
+                $level = Logger::NOTICE;
+                break;
+            case 'info':
+                $level = Logger::INFO;
+                break;
+            case 'debug':
+                $level = Logger::DEBUG;
+                break;
+        }
+
+        $this['monolog.level']   = $level;
+        if ($logPath) {
+            $logPath = str_replace(
+                array('{APP_ROOT}', '{DATE}'),
+                array(realpath(__DIR__.'/../..'), $this['kernel.timer.start']),
+                $logPath
+            );
+            $this['monolog.logfile'] = $logPath;
+        }
+
+        // remove all handlers from the stack
+        try {
+            while ($monolog->popHandler()) {
+            }
+        } catch (\LogicException $e) {
+            // popHandler throws an exception when you try to pop the empty stack; to us this is not an
+            // error but an indication that the handler stack is empty.
+        }
+
+        if ($level === 'quiet') {
+            $monolog->pushHandler(new NullHandler());
+            return;
+        }
+
+        // set our new handlers
+        if ($logPath) {
+            $monolog->pushHandler(new StreamHandler($logPath, $level));
+        } else {
+            $monolog->pushHandler(new StreamHandler('php://stdout', $level));
+        }
     }
 
     /**
@@ -145,8 +226,7 @@ class Application extends Cilex
      */
     public function setTimezone()
     {
-        if (false === ini_get('date.timezone')
-            || (version_compare(phpversion(), '5.4.0', '<')
+        if (false === ini_get('date.timezone') || (version_compare(phpversion(), '5.4.0', '<')
             && false === getenv('TZ'))
         ) {
             date_default_timezone_set('UTC');
@@ -172,12 +252,12 @@ class Application extends Cilex
                 $user_config_file = (file_exists(getcwd() . DIRECTORY_SEPARATOR . 'phpdoc.xml'))
                     ? getcwd() . DIRECTORY_SEPARATOR . 'phpdoc.xml'
                     : getcwd() . DIRECTORY_SEPARATOR . 'phpdoc.dist.xml';
-                $config_files = array(__DIR__ . '/../../data/phpdoc.tpl.xml');
+                $config_files     = array(__DIR__ . '/../../data/phpdoc.tpl.xml');
                 if (is_readable($user_config_file)) {
                     $config_files[] = $user_config_file;
                 }
 
-                return \Zend\Config\Factory::fromFiles($config_files, true);
+                return Factory::fromFiles($config_files, true);
             }
         );
     }
@@ -197,34 +277,86 @@ class Application extends Cilex
     }
 
     /**
-     * Load the plugins.
-     *
-     * phpDocumentor instantiates the plugin manager given the Event Dispatcher,
-     * Configuration and autoloader.
-     * Using this manager it will read the configuration and load the required
-     * plugins.
+     * Adds the message translator to phpDocumentor's container.
      *
      * @return void
      */
-    protected function loadPlugins()
+    protected function addTranslator()
     {
-        $app = $this;
-        $this['plugin_manager'] = $this->share(
-            function () use ($app) {
-                $manager = new \phpDocumentor\Plugin\Manager(
-                    $app['event_dispatcher'],
-                    $app['config'],
-                    $app['autoloader']
-                );
-                return $manager;
+        $config = $this['config']->toArray();
+
+        $this['translator.locale'] = isset($config['translator']['locale']) ? $config['translator']['locale'] : 'en';
+        $this['translator'] = $this->share(
+            function ($app) {
+                $translator = new Translator();
+                $translator->setLocale($this['translator.locale']);
+
+                return $translator;
             }
         );
-        $this['plugin_manager']->loadFromConfiguration();
+    }
+
+    /**
+     * Adds the command to phpDocumentor that belong to the Project namespace.
+     *
+     * @return void
+     */
+    protected function addCommandsForProjectNamespace()
+    {
+        $this->command(new Command\Project\RunCommand());
+    }
+
+    /**
+     * Adds the serializer to the container
+     *
+     * @return void
+     */
+    protected function addSerializer()
+    {
+        $this['serializer'] = $this->share(
+            function () {
+                $serializerPath = __DIR__ . '/../../vendor/jms/serializer/src';
+
+                if (!file_exists($serializerPath)) {
+                    $serializerPath = __DIR__ . '/../../../../jms/serializer/src';
+                }
+
+                AnnotationRegistry::registerAutoloadNamespace(
+                    'JMS\Serializer\Annotation',
+                    $serializerPath
+                );
+
+                return SerializerBuilder::create()->build();
+            }
+        );
+    }
+
+    /**
+     * Run the application and if no command is provided, use project:run.
+     *
+     * @param bool $interactive Whether to run in interactive mode.
+     *
+     * @return void
+     */
+    public function run($interactive = false)
+    {
+        /** @var ConsoleApplication $app  */
+        $app = $this['console'];
+        $app->setAutoExit(false);
+
+        if ($interactive) {
+            $app = new Shell($app);
+        }
+
+        $output = new Console\Output\Output();
+        $output->setLogger($this['monolog']);
+
+        $app->run(new ArgvInput(), $output);
     }
 }
 
 /**
- * Tries to find the autoloader relative to ththis file and return its path.
+ * Tries to find the autoloader relative to this file and return its path.
  *
  * @throws \RuntimeException if the autoloader could not be found.
  *

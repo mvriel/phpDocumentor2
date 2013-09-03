@@ -1,6 +1,14 @@
 Troubleshooting
 ===============
 
+I want to install phpDocumentor without internet access
+-------------------------------------------------------
+
+At http://pear.phpdoc.org you can find compressed archives that can be used to do an offline install using PEAR, or
+when you do not have PEAR on the designated machine you can uncompress the archive in your installation path.
+
+The binary's path is ``<installation_path>/bin/phpdoc.php``.
+
 I get the following error: preg_match(): Compilation failed: support for \P, \p, and \X has not been compiled
 -------------------------------------------------------------------------------------------------------------
 
@@ -40,3 +48,9 @@ against a newer version of the library than is available on the platform.
 The only solution to resolve this situation is to update your libxml library to
 at least the version as specified in the libxslt line, to update your Zend
 Server to the latest version and/or contact Zend Support for a solution.
+
+I get an error during transformation: Specified DOMDocument lacks documentElement, cannot transform
+----------------------------------------------------------------------------------------------------
+
+Your source files do not have UTF-8 encoding, add ``--encoding`` parameter to the command with the correct encoding
+See also: :doc:`Run command <../commands/project_run>`
