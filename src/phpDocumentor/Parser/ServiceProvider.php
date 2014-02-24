@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -13,11 +13,12 @@ namespace phpDocumentor\Parser;
 
 use Cilex\Application;
 use Cilex\ServiceProviderInterface;
-use phpDocumentor\Translator;
 use phpDocumentor\Event\Dispatcher;
 use phpDocumentor\Parser\Command\Project\ParseCommand;
-use phpDocumentor\Plugin\Core\Parser\DocBlock\Validator\ValidatorAbstract;
+use phpDocumentor\Partials\Collection as PartialsCollection;
+use phpDocumentor\Plugin\Core\Descriptor\Validator\ValidatorAbstract;
 use phpDocumentor\Reflection\Event\PostDocBlockExtractionEvent;
+use phpDocumentor\Translator;
 
 /**
  * This provider is responsible for registering the parser component with the given Application.
@@ -30,6 +31,7 @@ class ServiceProvider implements ServiceProviderInterface
      * @param Application $app An Application instance
      *
      * @throws Exception\MissingDependencyException if the Descriptor Builder is not present.
+     * @throws Exception\MissingNameForPartialException if a partial has no name provided.
      *
      * @return void
      */
@@ -42,8 +44,17 @@ class ServiceProvider implements ServiceProviderInterface
         }
 
         $app['parser'] = $app->share(
+            function ($app) {
+                $parser = new Parser();
+                $parser->setStopwatch($app['kernel.stopwatch']);
+                $parser->setLogger($app['monolog']);
+                return $parser;
+            }
+        );
+
+        $app['markdown'] = $app->share(
             function () {
-                return new Parser();
+                return \Parsedown::instance();
             }
         );
 
@@ -51,17 +62,45 @@ class ServiceProvider implements ServiceProviderInterface
         $translator = $app['translator'];
         $translator->addTranslationFolder(__DIR__ . DIRECTORY_SEPARATOR . 'Messages');
 
-        $app->command(new ParseCommand($app['descriptor.builder'], $app['parser'], $translator));
+        $config = $app['config']->toArray();
 
-        /** @var Dispatcher $dispatcher  */
-        $dispatcher = $app['event_dispatcher'];
-        $dispatcher->addListener('reflection.docblock-extraction.post', array($this, 'validateDocBlocks'));
+        $partialsCollection = new PartialsCollection($app['markdown']);
+        if (isset($config['partials'])) {
+            $partials = is_array(current($config['partials']['partial']))
+                ? $config['partials']['partial']
+                : array($config['partials']['partial']);
+
+            foreach ($partials as $partial) {
+                if (!isset($partial['name'])) {
+                    throw new Exception\MissingNameForPartialException('The name of the partial to load is missing');
+                }
+                if (isset($partial['content'])) {
+                    $partialsCollection->set($partial['name'], $partial['content']);
+                } elseif (isset($partial['link'])) {
+                    if (!is_readable($partial['link'])) {
+                        $app['monolog']->error(
+                            sprintf($translator->translate('PPCPP:EXC-NOPARTIAL'), $partial['link'])
+                        );
+                    } else {
+                        $partialsCollection->set($partial['name'], file_get_contents($partial['link']));
+                    }
+                } else {
+                    $partialsCollection->set($partial['name'], '');
+                }
+            }
+
+        }
+        $app['partials'] = $partialsCollection;
+
+        $app->command(new ParseCommand($app['descriptor.builder'], $app['parser'], $translator));
     }
 
     /**
      * Checks all phpDocumentor whether they match the given rules.
      *
      * @param PostDocBlockExtractionEvent $data Event object containing the parameters.
+     *
+     * @todo convert this method to the new style validators; this method is not invoked anymore
      *
      * @return void
      */
@@ -95,7 +134,7 @@ class ServiceProvider implements ServiceProviderInterface
                 /** @var ValidatorAbstract $val */
                 $val = new $class($element->getName(), $docblock, $element);
                 $val->setOptions($validatorOptions);
-                $val->isValid();
+                $val->isValid($element);
             }
         }
     }

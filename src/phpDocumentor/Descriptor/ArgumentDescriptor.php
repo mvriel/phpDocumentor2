@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -18,7 +18,7 @@ class ArgumentDescriptor extends DescriptorAbstract implements Interfaces\Argume
     /** @var string[] $type an array of normalized types that should be in this Argument */
     protected $types = array();
 
-    /** @var bool $default the default value for an argument or null if none is provided */
+    /** @var string|null $default the default value for an argument or null if none is provided */
     protected $default;
 
     /** @var bool $byReference whether the argument passes the parameter by reference instead of by value */

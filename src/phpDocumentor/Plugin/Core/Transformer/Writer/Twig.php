@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -40,7 +40,7 @@ use phpDocumentor\Translator;
  *   class entry.
  *
  * When using the Query attribute in the transformation it is important to
- * use a variable in the Artefact attribute as well (otherwise the same file
+ * use a variable in the Artifact attribute as well (otherwise the same file
  * would be overwritten several times).
  *
  * A simple example transformation line could be:
@@ -70,12 +70,12 @@ use phpDocumentor\Translator;
  *
  *     This example transformation would use this writer to transform the
  *     class.twig template file in the twig template folder into a file with
- *     the 'name' poperty for an individual class inside the Object Graph.
+ *     the 'name' property for an individual class inside the Object Graph.
  *     Since a Query *is* provided will the 'node' global variable contain a
  *     specific instance of a class applicable to the current iteration.
  *
  * @see self::getDestinationPath() for more information about variables in the
- *     Artefact attribute.
+ *     Artifact attribute.
  */
 class Twig extends WriterAbstract implements Routable
 {
@@ -274,27 +274,29 @@ class Twig extends WriterAbstract implements Routable
         ProjectDescriptor $project,
         \Twig_Environment $twigEnvironment
     ) {
-        $isDebug = $transformation->getParameter('twig-debug', 'false');
+        $isDebug = $transformation->getParameter('twig-debug')
+            ? $transformation->getParameter('twig-debug')->getValue()
+            : false;
         if ($isDebug == 'true') {
             $twigEnvironment->enableDebug();
             $twigEnvironment->addExtension(new \Twig_Extension_Debug());
         }
 
-        /** @var \SimpleXMLElement $extension */
-        foreach ((array) $transformation->getParameter('twig-extension', array()) as $extension) {
-            $extension = (string) $extension;
-            if (!class_exists($extension)) {
-                throw new \InvalidArgumentException('Unknown twig extension: ' . $extension);
+        /** @var Template\Parameter $extension */
+        foreach ($transformation->getParametersWithKey('twig-extension') as $extension) {
+            $extensionValue = $extension->getValue();
+            if (!class_exists($extensionValue)) {
+                throw new \InvalidArgumentException('Unknown twig extension: ' . $extensionValue);
             }
 
             // to support 'normal' Twig extensions we check the interface to determine what instantiation to do.
             $implementsInterface = in_array(
                 'phpDocumentor\Plugin\Core\Twig\ExtensionInterface',
-                class_implements($extension)
+                class_implements($extensionValue)
             );
 
             $twigEnvironment->addExtension(
-                $implementsInterface ? new $extension($project, $transformation) : new $extension()
+                $implementsInterface ? new $extensionValue($project, $transformation) : new $extensionValue()
             );
         }
     }
@@ -315,13 +317,14 @@ class Twig extends WriterAbstract implements Routable
      *
      * Example:
      *
-     *   An artefact stating `classes/{{name}}.html` will try to find the
+     *   An artifact stating `classes/{{name}}.html` will try to find the
      *   node 'name' as a child of the given $node and use that value instead.
      *
      * @param DescriptorAbstract $node
      * @param Transformation     $transformation
      *
      * @throws \InvalidArgumentException if no artifact is provided and no routing rule matches.
+     * @throws \UnexpectedValueException if the provided node does not contain anything.
      *
      * @return string|false returns the destination location or false if generation should be aborted.
      */

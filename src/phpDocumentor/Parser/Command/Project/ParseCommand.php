@@ -5,7 +5,7 @@
  * PHP Version 5.3
  *
  * @author    Mike van Riel <mike.vanriel@naenius.com>
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -128,6 +128,8 @@ class ParseCommand extends ConfigurableCommand
      * @param InputInterface  $input
      * @param OutputInterface $output
      *
+     * @throws \Exception if the target location is not a folder.
+     *
      * @return integer
      */
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -136,6 +138,7 @@ class ParseCommand extends ConfigurableCommand
         parent::execute($input, $output);
 
         $target = $this->getOption($input, 'target', 'parser/target');
+        $target = str_replace('/tmp/', sys_get_temp_dir() . DIRECTORY_SEPARATOR, $target);
         if (!$this->isAbsolute($target)) {
             $target = getcwd().DIRECTORY_SEPARATOR.$target;
         }
@@ -192,6 +195,8 @@ class ParseCommand extends ConfigurableCommand
             $progress->finish();
         }
 
+        $projectDescriptor->setPartials($this->getService('partials'));
+
         $output->write($this->__('PPCPP:LOG-STORECACHE', (array) $this->getCache()->getOptions()->getCacheDir()));
         $mapper->save($projectDescriptor);
 
@@ -236,7 +241,7 @@ class ParseCommand extends ConfigurableCommand
         $files->setIgnoreHidden($this->getOption($input, 'hidden', 'files/ignore-hidden', 'off') == 'on');
         $files->setFollowSymlinks($this->getOption($input, 'ignore-symlinks', 'files/ignore-symlinks', 'off') == 'on');
 
-        $file_options = $this->getOption($input, 'filename', 'files/file', array(), true);
+        $file_options = (array)$this->getOption($input, 'filename', 'files/file', array(), true);
         $added_files = array();
         foreach ($file_options as $glob) {
             if (!is_string($glob)) {
@@ -257,7 +262,7 @@ class ParseCommand extends ConfigurableCommand
         }
         $files->addFiles($added_files);
 
-        $directory_options = $this->getOption($input, 'directory', 'files/directory', array(), true);
+        $directory_options = (array)$this->getOption($input, 'directory', 'files/directory', array(), true);
         $added_directories = array();
         foreach ($directory_options as $glob) {
             if (!is_string($glob)) {

@@ -98,21 +98,6 @@ class DescriptorAbstractTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers phpDocumentor\Descriptor\DescriptorAbstract::getSummary
-     */
-    public function testGetSummaryFromParent()
-    {
-        $parent = m::mock('phpDocumentor\Descriptor\DescriptorAbstract');
-        $parent->shouldDeferMissing();
-        $parent->setSummary('inheritedSummary');
-
-        $mock = m::mock('phpDocumentor\Descriptor\DescriptorAbstract, phpDocumentor\Descriptor\Interfaces\ChildInterface');
-        $mock->shouldDeferMissing();
-        $mock->shouldReceive('getParent')->andReturn($parent);
-        $this->assertSame('inheritedSummary', $mock->getSummary());
-    }
-
-    /**
      * @covers phpDocumentor\Descriptor\DescriptorAbstract::setDescription
      * @covers phpDocumentor\Descriptor\DescriptorAbstract::getDescription
      */
@@ -126,85 +111,17 @@ class DescriptorAbstractTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers phpDocumentor\Descriptor\DescriptorAbstract::getDescription
-     */
-    public function testGetDescriptionFromParent()
-    {
-        $parent = m::mock('phpDocumentor\Descriptor\DescriptorAbstract');
-        $parent->shouldDeferMissing();
-        $parent->setDescription('inheritedDescription');
-
-        $mock = m::mock('phpDocumentor\Descriptor\DescriptorAbstract, phpDocumentor\Descriptor\Interfaces\ChildInterface');
-        $mock->shouldDeferMissing();
-        $mock->shouldReceive('getParent')->andReturn($parent);
-        $this->assertSame('inheritedDescription', $mock->getDescription());
-    }
-
-    /**
      * @covers phpDocumentor\Descriptor\DescriptorAbstract::setPackage
      * @covers phpDocumentor\Descriptor\DescriptorAbstract::getPackage
      */
     public function testSettingAndGettingPackage()
     {
-        $this->assertSame('', $this->fixture->getPackage());
+        $package = new PackageDescriptor();
+        $this->assertSame(null, $this->fixture->getPackage());
 
-        $this->fixture->setPackage('Package');
+        $this->fixture->setPackage($package);
 
-        $this->assertSame('Package', $this->fixture->getPackage());
-    }
-
-    /**
-     * @covers phpDocumentor\Descriptor\DescriptorAbstract::getPackage
-     */
-    public function testGetPackageFromParent()
-    {
-        $parent = m::mock('phpDocumentor\Descriptor\DescriptorAbstract');
-        $parent->shouldDeferMissing();
-        $parent->setPackage('inheritedPackage');
-
-        $mock = m::mock('phpDocumentor\Descriptor\DescriptorAbstract, phpDocumentor\Descriptor\Interfaces\ChildInterface');
-        $mock->shouldDeferMissing();
-        $mock->shouldReceive('getParent')->andReturn($parent);
-        $this->assertSame('inheritedPackage', $mock->getPackage());
-    }
-
-    /**
-     * @covers phpDocumentor\Descriptor\DescriptorAbstract::getSubPackage
-     */
-    public function testGetSubPackage()
-    {
-        $mock = m::mock('phpDocumentor\Descriptor\DescriptorAbstract, phpDocumentor\Descriptor\Interfaces\ChildInterface');
-        $mock->shouldDeferMissing();
-
-        $subpackageMock = m::mock('phpDocumentor\Descriptor\TagDescriptor');
-        $subpackageMock->shouldReceive('getDescription')->andReturn('sub');
-        $subpackage = new Collection(array($subpackageMock));
-
-        $collection = new Collection();
-        $collection->offsetSet('subpackage', $subpackage);
-
-        $mock->shouldReceive('getTags')->andReturn($collection);
-        $this->assertSame('sub', $mock->getSubPackage());
-    }
-
-    /**
-     * @covers phpDocumentor\Descriptor\DescriptorAbstract::getSubPackage
-     */
-    public function testGetSubPackageFromParent()
-    {
-        $parentCollection = new Collection(array('parentSubpackage'));
-        $parent = m::mock('phpDocumentor\Descriptor\DescriptorAbstract');
-        $parent->shouldDeferMissing();
-        $parent->setPackage('Package');
-        $parent->shouldReceive('getSubPackage')->andReturn($parentCollection);
-
-        $mock = m::mock('phpDocumentor\Descriptor\DescriptorAbstract, phpDocumentor\Descriptor\Interfaces\ChildInterface');
-        $mock->shouldDeferMissing();
-        $mock->shouldReceive('getTags')->andReturn(new Collection());
-        $mock->shouldReceive('getParent')->andReturn($parent);
-        $mock->shouldReceive('getPackage')->andReturn('Package');
-
-        $this->assertSame($parentCollection, $mock->getSubPackage());
+        $this->assertSame($package, $this->fixture->getPackage());
     }
 
     /**
@@ -212,7 +129,9 @@ class DescriptorAbstractTest extends \PHPUnit_Framework_TestCase
      */
     public function testGetAuthor()
     {
-        $mock = m::mock('phpDocumentor\Descriptor\DescriptorAbstract, phpDocumentor\Descriptor\Interfaces\ChildInterface');
+        $mock = m::mock(
+            'phpDocumentor\Descriptor\DescriptorAbstract, phpDocumentor\Descriptor\Interfaces\ChildInterface'
+        );
         $mock->shouldDeferMissing();
 
         $author = new Collection(array('author'));
@@ -225,29 +144,13 @@ class DescriptorAbstractTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers phpDocumentor\Descriptor\DescriptorAbstract::getAuthor
-     */
-    public function testGetAuthorFromParent()
-    {
-        $parentCollection = new Collection(array('parentAuthor'));
-        $parent = m::mock('phpDocumentor\Descriptor\DescriptorAbstract');
-        $parent->shouldDeferMissing();
-        $parent->shouldReceive('getAuthor')->andReturn($parentCollection);
-
-        $mock = m::mock('phpDocumentor\Descriptor\DescriptorAbstract, phpDocumentor\Descriptor\Interfaces\ChildInterface');
-        $mock->shouldDeferMissing();
-        $mock->shouldReceive('getTags')->andReturn(new Collection());
-        $mock->shouldReceive('getParent')->andReturn($parent);
-
-        $this->assertSame($parentCollection, $mock->getAuthor());
-    }
-
-    /**
      * @covers phpDocumentor\Descriptor\DescriptorAbstract::getVersion
      */
     public function testGetVersion()
     {
-        $mock = m::mock('phpDocumentor\Descriptor\DescriptorAbstract, phpDocumentor\Descriptor\Interfaces\ChildInterface');
+        $mock = m::mock(
+            'phpDocumentor\Descriptor\DescriptorAbstract, phpDocumentor\Descriptor\Interfaces\ChildInterface'
+        );
         $mock->shouldDeferMissing();
 
         $version = new Collection(array('version'));
@@ -260,29 +163,13 @@ class DescriptorAbstractTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers phpDocumentor\Descriptor\DescriptorAbstract::getVersion
-     */
-    public function testGetVersionFromParent()
-    {
-        $parentCollection = new Collection(array('parentVersion'));
-        $parent = m::mock('phpDocumentor\Descriptor\DescriptorAbstract');
-        $parent->shouldDeferMissing();
-        $parent->shouldReceive('getVersion')->andReturn($parentCollection);
-
-        $mock = m::mock('phpDocumentor\Descriptor\DescriptorAbstract, phpDocumentor\Descriptor\Interfaces\ChildInterface');
-        $mock->shouldDeferMissing();
-        $mock->shouldReceive('getTags')->andReturn(new Collection());
-        $mock->shouldReceive('getParent')->andReturn($parent);
-
-        $this->assertSame($parentCollection, $mock->getVersion());
-    }
-
-    /**
      * @covers phpDocumentor\Descriptor\DescriptorAbstract::getCopyright
      */
     public function testGetCopyRight()
     {
-        $mock = m::mock('phpDocumentor\Descriptor\DescriptorAbstract, phpDocumentor\Descriptor\Interfaces\ChildInterface');
+        $mock = m::mock(
+            'phpDocumentor\Descriptor\DescriptorAbstract, phpDocumentor\Descriptor\Interfaces\ChildInterface'
+        );
         $mock->shouldDeferMissing();
 
         $copyright = new Collection(array('copyright'));
@@ -292,24 +179,6 @@ class DescriptorAbstractTest extends \PHPUnit_Framework_TestCase
 
         $mock->shouldReceive('getTags')->andReturn($collection);
         $this->assertSame($copyright, $mock->getCopyright());
-    }
-
-    /**
-     * @covers phpDocumentor\Descriptor\DescriptorAbstract::getCopyright
-     */
-    public function testGetCopyrightFromParent()
-    {
-        $parentCollection = new Collection(array('parentCopyright'));
-        $parent = m::mock('phpDocumentor\Descriptor\DescriptorAbstract');
-        $parent->shouldDeferMissing();
-        $parent->shouldReceive('getCopyright')->andReturn($parentCollection);
-
-        $mock = m::mock('phpDocumentor\Descriptor\DescriptorAbstract, phpDocumentor\Descriptor\Interfaces\ChildInterface');
-        $mock->shouldDeferMissing();
-        $mock->shouldReceive('getTags')->andReturn(new Collection());
-        $mock->shouldReceive('getParent')->andReturn($parent);
-
-        $this->assertSame($parentCollection, $mock->getCopyright());
     }
 
     /**

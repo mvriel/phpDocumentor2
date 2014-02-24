@@ -24,3 +24,7 @@ notifications:
   email:
     - mike.vanriel@naenius.com
     - ashnazg@php.net
+
+matrix:
+  allow_failures:
+    - hhvm

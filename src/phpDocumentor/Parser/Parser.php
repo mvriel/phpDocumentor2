@@ -12,16 +12,15 @@
 
 namespace phpDocumentor\Parser;
 
-use phpDocumentor\Descriptor\FileDescriptor;
 use phpDocumentor\Descriptor\ProjectDescriptorBuilder;
-use phpDocumentor\Event\DebugEvent;
 use phpDocumentor\Event\Dispatcher;
 use phpDocumentor\Event\LogEvent;
 use phpDocumentor\Fileset\Collection;
-use phpDocumentor\Parser\Event\PreFileEvent;
 use phpDocumentor\Parser\Exception\FilesNotFoundException;
-use phpDocumentor\Reflection\FileReflector;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
+use Symfony\Component\Stopwatch\Stopwatch;
 
 /**
  * Class responsible for parsing the given file or files to the intermediate
@@ -38,10 +37,10 @@ use Psr\Log\LogLevel;
  *     $parser->setPath($files->getProjectRoot());
  *     echo $parser->parseFiles($files);
  */
-class Parser
+class Parser implements LoggerAwareInterface
 {
     /** @var string the name of the default package */
-    protected $default_package_name = 'Default';
+    protected $defaultPackageName = 'Default';
 
     /** @var bool whether we force a full re-parse */
     protected $force = false;
@@ -53,10 +52,13 @@ class Parser
     protected $markers = array('TODO', 'FIXME');
 
     /** @var string[] which tags to ignore */
-    protected $ignored_tags = array();
+    protected $ignoredTags = array();
 
     /** @var string target location's root path */
-    protected $path = null;
+    protected $path = '';
+
+    /** @var LoggerInterface $logger */
+    protected $logger;
 
     /**
      * Array of visibility modifiers that should be adhered to when generating
@@ -69,6 +71,9 @@ class Parser
     /** @var string The encoding in which the files are encoded */
     protected $encoding = 'utf-8';
 
+    /** @var Stopwatch $stopwatch The profiling component that measures time and memory usage over time */
+    protected $stopwatch = null;
+
     /**
      * Initializes the parser.
      *
@@ -76,13 +81,27 @@ class Parser
      * is used as a default value for phpDocumentor to convert the source files that it receives.
      *
      * If no encoding is specified than 'utf-8' is assumed by default.
+     *
+     * @codeCoverageIgnore the ini_get call cannot be tested as setting it using ini_set has no effect.
      */
     public function __construct()
     {
-        $default_encoding = ini_get('zend.script_encoding');
-        if ($default_encoding) {
-            $this->encoding = $default_encoding;
+        $defaultEncoding = ini_get('zend.script_encoding');
+        if ($defaultEncoding) {
+            $this->encoding = $defaultEncoding;
         }
+    }
+
+    /**
+     * Registers the component that profiles the execution of the parser.
+     *
+     * @param Stopwatch $stopwatch
+     *
+     * @return void
+     */
+    public function setStopwatch(Stopwatch $stopwatch)
+    {
+        $this->stopwatch = $stopwatch;
     }
 
     /**
@@ -169,15 +188,15 @@ class Parser
     /**
      * Sets a list of tags to ignore.
      *
-     * @param string[] $ignored_tags A list of tags to ignore.
+     * @param string[] $ignoredTags A list of tags to ignore.
      *
      * @api
      *
      * @return void
      */
-    public function setIgnoredTags(array $ignored_tags)
+    public function setIgnoredTags(array $ignoredTags)
     {
-        $this->ignored_tags = $ignored_tags;
+        $this->ignoredTags = $ignoredTags;
     }
 
     /**
@@ -189,7 +208,7 @@ class Parser
      */
     public function getIgnoredTags()
     {
-        return $this->ignored_tags;
+        return $this->ignoredTags;
     }
 
     /**
@@ -204,6 +223,16 @@ class Parser
     public function setPath($path)
     {
         $this->path = $path;
+    }
+
+    /**
+     * Returns the absolute base path for all files.
+     *
+     * @return string
+     */
+    public function getPath()
+    {
+        return $this->path;
     }
 
     /**
@@ -233,38 +262,16 @@ class Parser
     }
 
     /**
-     * Returns the filename, relative to the root of the project directory.
-     *
-     * @param string $filename The filename to make relative.
-     *
-     * @throws \InvalidArgumentException if file is not in the project root.
-     *
-     * @return string
-     */
-    public function getRelativeFilename($filename)
-    {
-        // strip path from filename
-        $result = ltrim(substr($filename, strlen($this->path)), DIRECTORY_SEPARATOR);
-        if ($result === '') {
-            throw new \InvalidArgumentException(
-                'File is not present in the given project path: ' . $filename
-            );
-        }
-
-        return $result;
-    }
-
-    /**
      * Sets the name of the default package.
      *
-     * @param string $default_package_name Name used to categorize elements
+     * @param string $defaultPackageName Name used to categorize elements
      *  without an @package tag.
      *
      * @return void
      */
-    public function setDefaultPackageName($default_package_name)
+    public function setDefaultPackageName($defaultPackageName)
     {
-        $this->default_package_name = $default_package_name;
+        $this->defaultPackageName = $defaultPackageName;
     }
 
     /**
@@ -274,7 +281,7 @@ class Parser
      */
     public function getDefaultPackageName()
     {
-        return $this->default_package_name;
+        return $this->defaultPackageName;
     }
 
     /**
@@ -307,10 +314,22 @@ class Parser
     }
 
     /**
+     * Sets a logger instance on the object
+     *
+     * @param LoggerInterface $logger
+     *
+     * @return null
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
+    /**
      * Iterates through the given files feeds them to the builder.
      *
      * @param ProjectDescriptorBuilder $builder
-     * @param Collection               $files          A files container to parse.
+     * @param Collection               $files   A files container to parse.
      *
      * @api
      *
@@ -320,32 +339,34 @@ class Parser
      */
     public function parse(ProjectDescriptorBuilder $builder, Collection $files)
     {
-        $timer = microtime(true);
+        $this->startTimingTheParsePhase();
+
+        $this->forceRebuildIfSettingsHaveModified($builder);
+
         $paths = $this->getFilenames($files);
 
         $this->log('  Project root is:  ' . $files->getProjectRoot());
         $this->log('  Ignore paths are: ' . implode(', ', $files->getIgnorePatterns()->getArrayCopy()));
 
-        if ($builder->getProjectDescriptor()->getSettings()->isModified()) {
-            $this->setForced(true);
-            $this->log('One of the project\'s settings have changed, forcing a complete rebuild');
-        }
-
+        $memory = 0;
         foreach ($paths as $filename) {
             $this->parseFileIntoDescriptor($builder, $filename);
+            $memory = $this->logAfterParsingAFile($memory);
         }
-        $this->log('Elapsed time to parse all files: ' . round(microtime(true) - $timer, 2) . 's');
-        $this->log('Peak memory usage: '. round(memory_get_peak_usage() / 1024 / 1024, 2) . 'M');
+
+        $this->logAfterParsingAllFiles();
 
         return $builder->getProjectDescriptor();
     }
 
     /**
-     * @param \phpDocumentor\Fileset\Collection $files
+     * Extract all filenames from the given collection and output the amount of files.
+     *
+     * @param Collection $files
      *
      * @throws FilesNotFoundException if no files were found.
      *
-     * @return \string[]
+     * @return string[]
      */
     protected function getFilenames(Collection $files)
     {
@@ -368,89 +389,77 @@ class Parser
      */
     protected function parseFileIntoDescriptor(ProjectDescriptorBuilder $builder, $filename)
     {
-        if (class_exists('phpDocumentor\Event\Dispatcher')) {
-            Dispatcher::getInstance()->dispatch(
-                'parser.file.pre',
-                PreFileEvent::createInstance($this)->setFile($filename)
-            );
-        }
-        $this->log('Starting to parse file: ' . $filename);
-
-        $memory = memory_get_usage();
-        try {
-            $file = $this->createFileReflector($builder, $filename);
-            if (!$file) {
-                $this->log('>> Skipped file ' . $filename . ' as no modifications were detected');
-                return;
-            }
-
-            $file->process();
-            $builder->buildFileUsingSourceData($file);
-            $this->logErrorsForDescriptor($builder->getProjectDescriptor()->getFiles()->get($file->getFilename()));
-        } catch (Exception $e) {
-            $this->log(
-                '  Unable to parse file "' . $filename . '", an error was detected: ' . $e->getMessage(),
-                LogLevel::ALERT
-            );
-        }
-
-        $memoryDelta = memory_get_usage() - $memory;
-        $this->log(
-            '>> Memory after processing of file: ' . number_format(memory_get_usage() / 1024 / 1024, 2)
-            . ' megabytes (' . (($memoryDelta > -0)
-                ? '+'
-                : '') . number_format($memoryDelta / 1024)
-            . ' kilobytes)',
-            LogLevel::DEBUG
-        );
+        $parser = new File($this);
+        $parser->parse($filename, $builder);
     }
 
     /**
-     * Creates a new FileReflector for the given filename or null if the file contains no modifications.
+     * Checks if the settings of the project have changed and forces a complete rebuild if they have.
      *
      * @param ProjectDescriptorBuilder $builder
-     * @param string                   $filename
-     *
-     * @return FileReflector|null Returns a new FileReflector or null if no modifications were detected for the given
-     *     filename.
-     */
-    protected function createFileReflector(ProjectDescriptorBuilder $builder, $filename)
-    {
-        $file = new FileReflector($filename, $this->doValidation(), $this->getEncoding());
-        $file->setDefaultPackageName($this->getDefaultPackageName());
-        $file->setMarkers($this->getMarkers());
-        $file->setFilename($this->getRelativeFilename($filename));
-
-        $cachedFiles = $builder->getProjectDescriptor()->getFiles();
-        $hash        = $cachedFiles->get($file->getFilename())
-            ? $cachedFiles->get($file->getFilename())->getHash()
-            : null;
-
-        return $hash === $file->getHash() && !$this->isForced()
-            ? null
-            : $file;
-    }
-
-    /**
-     * Writes the errors found in the Descriptor to the log.
-     *
-     * @param FileDescriptor $fileDescriptor
      *
      * @return void
      */
-    protected function logErrorsForDescriptor($fileDescriptor)
+    protected function forceRebuildIfSettingsHaveModified(ProjectDescriptorBuilder $builder)
     {
-        $errors = $fileDescriptor->getAllErrors();
-        foreach ($errors as $error) {
-            $this->log($error->getCode(), $error->getSeverity(), $error->getContext());
+        if ($builder->getProjectDescriptor()->getSettings()->isModified()) {
+            $this->setForced(true);
+            $this->log('One of the project\'s settings have changed, forcing a complete rebuild');
         }
+    }
+
+    /**
+     * Collects the time and duration of processing a file, logs it and returns the new amount of memory in use.
+     *
+     * @param integer $memory
+     *
+     * @return integer
+     */
+    protected function logAfterParsingAFile($memory)
+    {
+        if (!$this->stopwatch) {
+            return $memory;
+        }
+
+        $lap = $this->stopwatch->lap('parser.parse');
+        $oldMemory = $memory;
+        $periods = $lap->getPeriods();
+        $memory = end($periods)->getMemory();
+
+        $this->log(
+            '>> Memory after processing of file: ' . number_format($memory / 1024 / 1024, 2)
+            . ' megabytes (' . (($memory - $oldMemory >= 0)
+                ? '+'
+                : '-') . number_format(($memory - $oldMemory) / 1024)
+            . ' kilobytes)',
+            LogLevel::DEBUG
+        );
+
+        return $memory;
+    }
+
+    /**
+     * Writes the complete parsing cycle to log.
+     *
+     * @return void
+     */
+    protected function logAfterParsingAllFiles()
+    {
+        if (!$this->stopwatch) {
+            return;
+        }
+
+        $event = $this->stopwatch->stop('parser.parse');
+
+        $this->log('Elapsed time to parse all files: ' . round($event->getDuration(), 2) . 's');
+        $this->log('Peak memory usage: ' . round($event->getMemory() / 1024 / 1024, 2) . 'M');
     }
 
     /**
      * Dispatches a logging request.
      *
      * @param string   $message  The message to log.
-     * @param int      $priority The logging priority as declared in the LogLevel PSR-3 class.
+     * @param string   $priority The logging priority as declared in the LogLevel PSR-3 class.
      * @param string[] $parameters
      *
      * @return void
@@ -460,24 +469,16 @@ class Parser
         Dispatcher::getInstance()->dispatch(
             'system.log',
             LogEvent::createInstance($this)
-            ->setContext($parameters)
-            ->setMessage($message)
-            ->setPriority($priority)
+                ->setContext($parameters)
+                ->setMessage($message)
+                ->setPriority($priority)
         );
     }
 
-    /**
-     * Dispatches a logging request to log a debug message.
-     *
-     * @param string $message The message to log.
-     *
-     * @return void
-     */
-    protected function debug($message)
+    protected function startTimingTheParsePhase()
     {
-        Dispatcher::getInstance()->dispatch(
-            'system.debug',
-            DebugEvent::createInstance($this)->setMessage($message)
-        );
+        if ($this->stopwatch) {
+            $this->stopwatch->start('parser.parse');
+        }
     }
 }

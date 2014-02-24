@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -12,6 +12,7 @@
 namespace phpDocumentor\Descriptor\Builder\Reflector;
 
 use phpDocumentor\Descriptor\ClassDescriptor;
+use phpDocumentor\Descriptor\Collection;
 use phpDocumentor\Reflection\ClassReflector;
 use phpDocumentor\Reflection\ConstantReflector;
 
@@ -57,6 +58,7 @@ class ClassAssembler extends AssemblerAbstract
         $this->addConstants($data->getConstants(), $classDescriptor);
         $this->addProperties($data->getProperties(), $classDescriptor);
         $this->addMethods($data->getMethods(), $classDescriptor);
+        $this->addUses($data->getTraits(), $classDescriptor);
 
         return $classDescriptor;
     }
@@ -116,5 +118,18 @@ class ClassAssembler extends AssemblerAbstract
                 $classDescriptor->getMethods()->set($methodDescriptor->getName(), $methodDescriptor);
             }
         }
+    }
+
+    /**
+     * Registers the used traits with the generated Class Descriptor.
+     *
+     * @param string[] $traits
+     * @param ClassDescriptor $classDescriptor
+     *
+     * @return void
+     */
+    protected function addUses(array $traits, ClassDescriptor $classDescriptor)
+    {
+        $classDescriptor->setUsedTraits(new Collection($traits));
     }
 }

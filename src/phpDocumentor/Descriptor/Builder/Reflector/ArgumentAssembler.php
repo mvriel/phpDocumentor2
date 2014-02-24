@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -45,6 +45,7 @@ class ArgumentAssembler extends AssemblerAbstract
         }
 
         $argumentDescriptor->setDefault($data->getDefault());
+        $argumentDescriptor->setByReference($data->isByRef());
 
         return $argumentDescriptor;
     }

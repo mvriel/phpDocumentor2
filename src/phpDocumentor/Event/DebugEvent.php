@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -19,7 +19,7 @@ use Psr\Log\LogLevel;
  * The information logged by this event will only be visible if the verbose
  * option is provided to phpDocumentor.
  */
-class DebugEvent extends \phpDocumentor\Event\EventAbstract
+class DebugEvent extends EventAbstract
 {
     /** @var string Message to display with the debugging event */
     protected $message;

@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -19,6 +19,7 @@ use phpDocumentor\Compiler\Pass\Debug;
 use phpDocumentor\Compiler\Pass\ElementsIndexBuilder;
 use phpDocumentor\Compiler\Pass\NamespaceTreeBuilder;
 use phpDocumentor\Compiler\Pass\PackageTreeBuilder;
+use phpDocumentor\Compiler\Pass\MarkerFromTagsExtractor;
 use phpDocumentor\Transformer\Command\Project\TransformCommand;
 use phpDocumentor\Transformer\Command\Template\ListCommand;
 
@@ -30,7 +31,10 @@ class ServiceProvider extends \stdClass implements ServiceProviderInterface
     /**
      * Registers services on the given app.
      *
-     * @param Application $app An Application instance
+     * @param Application $app An Application instance.
+     *
+     * @throws Exception\MissingDependencyException if the application does not have a descriptor.builder service.
+     * @throws Exception\MissingDependencyException if the application does not have a serializer service.
      */
     public function register(Application $app)
     {
@@ -63,6 +67,7 @@ class ServiceProvider extends \stdClass implements ServiceProviderInterface
                 'constants',
                 'properties',
                 'methods',
+                'usedTraits',
             ),
             'phpDocumentor\Descriptor\InterfaceDescriptor'    => array(
                 'tags',
@@ -74,6 +79,7 @@ class ServiceProvider extends \stdClass implements ServiceProviderInterface
                 'tags',
                 'properties',
                 'methods',
+                'usedTraits',
             ),
             'phpDocumentor\Descriptor\MethodDescriptor'       => array('tags', 'arguments'),
             'phpDocumentor\Descriptor\ArgumentDescriptor'     => array('types'),
@@ -89,6 +95,7 @@ class ServiceProvider extends \stdClass implements ServiceProviderInterface
             function ($container) {
                 $compiler = new Compiler();
                 $compiler->insert(new ElementsIndexBuilder(), ElementsIndexBuilder::COMPILER_PRIORITY);
+                $compiler->insert(new MarkerFromTagsExtractor(), MarkerFromTagsExtractor::COMPILER_PRIORITY);
                 $compiler->insert(new PackageTreeBuilder(), PackageTreeBuilder::COMPILER_PRIORITY);
                 $compiler->insert(new NamespaceTreeBuilder(), NamespaceTreeBuilder::COMPILER_PRIORITY);
                 $compiler->insert($container['linker'], Linker::COMPILER_PRIORITY);
@@ -114,12 +121,25 @@ class ServiceProvider extends \stdClass implements ServiceProviderInterface
             }
         );
 
-        $app['transformer.routing.queue'] = $app->share(
+
+        $app['transformer.routing.standard'] = $app->share(
             function () {
+                return new Router\StandardRouter();
+            }
+        );
+        $app['transformer.routing.external'] = $app->share(
+            function ($container) {
+                return new Router\ExternalRouter($container['config']);
+            }
+        );
+
+        $app['transformer.routing.queue'] = $app->share(
+            function ($container) {
                 $queue = new Router\Queue();
 
                 // TODO: load from app configuration instead of hardcoded
-                $queue->insert(new Router\StandardRouter(), 10000);
+                $queue->insert($container['transformer.routing.external'], 10500);
+                $queue->insert($container['transformer.routing.standard'], 10000);
 
                 return $queue;
             }

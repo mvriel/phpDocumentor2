@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -16,6 +16,7 @@ use phpDocumentor\Descriptor\Collection;
 use phpDocumentor\Descriptor\DescriptorAbstract;
 use phpDocumentor\Descriptor\PackageDescriptor;
 use phpDocumentor\Descriptor\ProjectDescriptor;
+use phpDocumentor\Descriptor\TagDescriptor;
 
 /**
  * Rebuilds the package tree from the elements found in files.
@@ -73,12 +74,26 @@ class PackageTreeBuilder implements CompilerPassInterface
     {
         /** @var DescriptorAbstract $element */
         foreach ($elements as $element) {
-            $packageName = (string) $element->getPackage();
-            if ($element->getSubPackage()) {
-                $packageName .= '\\' . $element->getSubPackage();
+            $packageTags = $element->getTags()->get('package');
+            if (!$packageTags instanceof Collection) {
+                continue;
             }
 
-            // ensure consistency by trimming the slash prefix and then reappending it.
+            $packageTag = $packageTags->getIterator()->current();
+            if (!$packageTag instanceof TagDescriptor) {
+                continue;
+            }
+            $packageName = $packageTag->getDescription();
+
+            $subpackageCollection = $element->getTags()->get('subpackage');
+            if ($subpackageCollection instanceof Collection && $subpackageCollection->count() > 0) {
+                $subpackageTag = $subpackageCollection->getIterator()->current();
+                if ($subpackageTag instanceof TagDescriptor) {
+                    $packageName .= '\\' . $subpackageTag->getDescription();
+                }
+            }
+
+            // ensure consistency by trimming the slash prefix and then re-appending it.
             $packageIndexName = '\\' . ltrim($packageName, '\\');
 
             if (!isset($project->getIndexes()->packages[$packageIndexName])) {

@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -15,6 +15,7 @@ use Cilex\Application as Cilex;
 use Cilex\Provider\MonologServiceProvider;
 use Cilex\Provider\ValidatorServiceProvider;
 use Doctrine\Common\Annotations\AnnotationRegistry;
+use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
 use Monolog\ErrorHandler;
 use Monolog\Handler\NullHandler;
@@ -22,15 +23,26 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use phpDocumentor\Command\Helper\LoggerHelper;
 use phpDocumentor\Console\Input\ArgvInput;
+use phpDocumentor\Transformer\Writer\Exception\RequirementMissing;
 use Symfony\Component\Console\Application as ConsoleApplication;
-use Symfony\Component\Console\Helper\ProgressHelper;
 use Symfony\Component\Console\Shell;
+use Symfony\Component\Stopwatch\Stopwatch;
 use Zend\Config\Factory;
 
 /**
  * Finds and activates the autoloader.
  */
 require_once findAutoloader();
+if (!\Phar::running()) {
+    define('DOMPDF_ENABLE_AUTOLOAD', false);
+    if (file_exists(__DIR__ . '/../../vendor/dompdf/dompdf/dompdf_config.inc.php')) {
+        // when normally installed, get it from the vendor folder
+        require_once(__DIR__ . '/../../vendor/dompdf/dompdf/dompdf_config.inc.php');
+    } else {
+        // when installed using composer, include it from that location
+        require_once(__DIR__ . '/../../../../dompdf/dompdf/dompdf_config.inc.php');
+    }
+}
 
 /**
  * Application class for phpDocumentor.
@@ -47,18 +59,22 @@ class Application extends Cilex
      */
     public function __construct()
     {
-        ini_set('memory_limit', -1);
-
+        $this->defineIniSettings();
+        
         self::$VERSION = file_get_contents(__DIR__ . '/../../VERSION');
 
         parent::__construct('phpDocumentor', self::$VERSION);
 
         $this['kernel.timer.start'] = time();
+        $this['kernel.stopwatch'] = function () {
+            return new Stopwatch();
+        };
 
+        $this->setTimezone();
         $this->addAutoloader();
+        $this->addSerializer();
         $this->addConfiguration();
         $this->addLogging();
-        $this->setTimezone();
         $this->addEventDispatcher();
         $this->addTranslator();
 
@@ -66,27 +82,84 @@ class Application extends Cilex
         $console = $this['console'];
         $console->getHelperSet()->set(new LoggerHelper());
 
-        $this['translator.locale'] = 'en';
-        $this['translator'] = $this->share(
-            function ($app) {
-                $translator = new Translator();
-                $translator->setLocale($app['translator.locale']);
-
-                return $translator;
-            }
-        );
-
-        $this->addSerializer();
-
         $this->register(new ValidatorServiceProvider());
         $this->register(new Descriptor\ServiceProvider());
         $this->register(new Parser\ServiceProvider());
         $this->register(new Transformer\ServiceProvider());
 
-        // TODO: make plugin service provider calls registrable from config
-        $this->register(new Plugin\Core\ServiceProvider());
+        $this->addPlugins();
 
+        $this->verifyWriterRequirementsAndExitIfBroken();
         $this->addCommandsForProjectNamespace();
+    }
+
+    /**
+     * Adjust php.ini settings.
+     * 
+     * @return void
+     */
+    protected function defineIniSettings()
+    {
+        ini_set('memory_limit', -1);
+
+        if (extension_loaded('opcache')) {
+            ini_set('opcache.save_comments', 1);
+            ini_set('opcache.load_comments', 1);
+        }
+    }
+
+    /**
+     * Instantiates plugin service providers and adds them to phpDocumentor's container.
+     *
+     * @return void
+     */
+    protected function addPlugins()
+    {
+        $config = $this['config']->toArray();
+
+        if (!isset($config['plugins']['plugin'][0]['path'])) {
+            $this->register(new Plugin\Core\ServiceProvider());
+            $this->register(new Plugin\Scrybe\ServiceProvider());
+            return;
+        }
+
+        $app = $this;
+
+        array_walk(
+            $config['plugins']['plugin'],
+            function ($plugin) use ($app) {
+                $provider = (strpos($plugin['path'], '\\') === false)
+                    ? sprintf('phpDocumentor\\Plugin\\%s\\ServiceProvider', $plugin['path'])
+                    : $plugin['path'];
+                if (!class_exists($provider)) {
+                    throw new \RuntimeException('Loading Service Provider for ' . $provider . ' failed.');
+                }
+
+                try {
+                    $app->register(new $provider);
+                } catch (\InvalidArgumentException $e) {
+                    throw new \RuntimeException($e->getMessage());
+                }
+            }
+        );
+    }
+
+    /**
+     * If the timezone is not set anywhere, set it to UTC.
+     *
+     * This is done to prevent any warnings being outputted in relation to using
+     * date/time functions. What is checked is php.ini, and if the PHP version
+     * is prior to 5.4, the TZ environment variable.
+     *
+     * @return void
+     */
+    public function setTimezone()
+    {
+        if (false === ini_get('date.timezone') || (version_compare(phpversion(), '5.4.0', '<')
+            && false === getenv('TZ'))
+        ) {
+            date_default_timezone_set('UTC');
+        }
     }
 
     /**
@@ -131,7 +204,7 @@ class Application extends Cilex
                     ? (string) $app['config']->logging->paths->errors
                     : null;
 
-                $app->configureLogger($log, $level, $logPath,$debugPath);
+                $app->configureLogger($log, $level, $logPath, $debugPath);
             }
         );
         ErrorHandler::register($this['monolog']);
@@ -216,31 +289,13 @@ class Application extends Cilex
     }
 
     /**
-     * If the timezone is not set anywhere, set it to UTC.
-     *
-     * This is done to prevent any warnings being outputted in relation to using
-     * date/time functions. What is checked is php.ini, and if the PHP version
-     * is prior to 5.4, the TZ environment variable.
-     *
-     * @return void
-     */
-    public function setTimezone()
-    {
-        if (false === ini_get('date.timezone') || (version_compare(phpversion(), '5.4.0', '<')
-            && false === getenv('TZ'))
-        ) {
-            date_default_timezone_set('UTC');
-        }
-    }
-
-    /**
      * Adds the Configuration object to the DIC.
      *
      * phpDocumentor first loads the template config file (/data/phpdoc.tpl.xml)
      * and then the phpdoc.dist.xml, or the phpdoc.xml if it exists but not both,
      * from the current working directory.
      *
-     * The user config file (either phpdox.dist.xml or phpdoc.xml) is merged
+     * The user config file (either phpdoc.dist.xml or phpdoc.xml) is merged
      * with the template file.
      *
      * @return void
@@ -286,10 +341,11 @@ class Application extends Cilex
         $config = $this['config']->toArray();
 
         $this['translator.locale'] = isset($config['translator']['locale']) ? $config['translator']['locale'] : 'en';
+
         $this['translator'] = $this->share(
             function ($app) {
                 $translator = new Translator();
-                $translator->setLocale($this['translator.locale']);
+                $translator->setLocale($app['translator.locale']);
 
                 return $translator;
             }
@@ -352,6 +408,18 @@ class Application extends Cilex
         $output->setLogger($this['monolog']);
 
         $app->run(new ArgvInput(), $output);
+    }
+
+    protected function verifyWriterRequirementsAndExitIfBroken()
+    {
+        try {
+            $this['transformer.writer.collection']->checkRequirements();
+        } catch (RequirementMissing $e) {
+            $this['monolog']->emerg(
+                'phpDocumentor detected that a requirement is missing in your system setup: ' . $e->getMessage()
+            );
+            exit(1);
+        }
     }
 }
 

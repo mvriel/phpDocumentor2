@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -76,7 +76,7 @@ class NamespaceTreeBuilder implements CompilerPassInterface
         foreach ($elements as $element) {
             $namespaceName = (string) $element->getNamespace();
 
-            // ensure consistency by trimming the slash prefix and then reappending it.
+            // ensure consistency by trimming the slash prefix and then re-appending it.
             $namespaceIndexName = '~\\' . ltrim($namespaceName, '\\');
 
             if (!isset($project->getIndexes()->elements[$namespaceIndexName])) {

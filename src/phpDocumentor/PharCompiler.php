@@ -51,7 +51,7 @@ class PharCompiler
     }
 
     /**
-     * Detects whether the given PHAR file alrready exists and removes it if so.
+     * Detects whether the given PHAR file already exists and removes it if so.
      *
      * @param string $pharFile
      *
@@ -114,7 +114,6 @@ class PharCompiler
                     'output',
                     'behat',
                     'cilex/cilex/tests',
-                    'dflydev/markdown/tests',
                     'nikic/php-parser/doc',
                     'nikic/php-parser/test',
                     'nikic/php-parser/test_old',
@@ -157,8 +156,7 @@ class PharCompiler
     /**
      * Adds the given file to the PHAR archive,
      *
-     * Before adding files to the archive they are bein converted to
-     * relative paths.
+     * Before adding files to the archive they are being converted to relative paths.
      *
      * @param string $file
      * @param \Phar  $phar
@@ -197,11 +195,13 @@ class PharCompiler
      */
     protected function getCliStub()
     {
-        return <<<'PHP'
+        return <<<"CLISTUB"
 #!/usr/bin/env php
 <?php
+{$this->getLicense()}
+
 require_once __DIR__.'/bin/phpdoc.php'; __HALT_COMPILER();
-PHP;
+CLISTUB;
     }
 
     /**
@@ -211,12 +211,14 @@ PHP;
      */
     protected function getWebStub()
     {
-        return <<<'PHP'
+        return <<<"WEBSTUB"
 #!/usr/bin/env php
-"<?php
+<?php
+{$this->getLicense()}
+
 throw new \LogicException('This PHAR file can only be used from the CLI.');
 __HALT_COMPILER();
-PHP;
+WEBSTUB;
     }
 
     /**
@@ -226,7 +228,7 @@ PHP;
      */
     protected function getLicense()
     {
-        return '
+        return <<<'DOCBLOCK'
 /**
  * phpDocumentor
  *
@@ -236,6 +238,7 @@ PHP;
  * @copyright 2010-2012 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
- */';
+ */
+DOCBLOCK;
     }
 }

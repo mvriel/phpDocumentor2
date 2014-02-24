@@ -4,14 +4,13 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
 
 namespace phpDocumentor\Plugin\Core\Twig;
 
-use dflydev\markdown\MarkdownExtraParser;
 use phpDocumentor\Descriptor\Collection;
 use phpDocumentor\Descriptor\ProjectDescriptor;
 use phpDocumentor\Transformer\Router\Queue;
@@ -142,14 +141,14 @@ class Extension extends \Twig_Extension implements ExtensionInterface
     {
         $extension = $this;
         $routers = $this->routers;
-        $parser = new MarkdownExtraParser();
+        $parser = \Parsedown::instance();
         $translator = $this->translator;
 
         return array(
             'markdown' => new \Twig_SimpleFilter(
                 'markdown',
                 function ($value) use ($parser) {
-                    return $parser->transform($value);
+                    return $parser->parse($value);
                 }
             ),
             'trans' => new \Twig_SimpleFilter(
@@ -177,7 +176,11 @@ class Extension extends \Twig_Extension implements ExtensionInterface
                         $rule     = $routers->match($path);
                         $url      = $rule ? ltrim($rule->generate($path), '/') : false;
 
-                        if ($url && $url[0] != '/') {
+                        if ($url
+                            && $url[0] != '/'
+                            && (strpos($url, 'http://') !== 0)
+                            && (strpos($url, 'https://') !== 0)
+                        ) {
                             $url = $extension->convertToRootPath($url);
                         }
 
@@ -195,6 +198,27 @@ class Extension extends \Twig_Extension implements ExtensionInterface
                     }
 
                     return $singleResult ? reset($result) : $result;
+                }
+            ),
+            'sort' => new \Twig_SimpleFilter(
+                'sort_*',
+                function ($direction, Collection $collection) {
+                    $iterator = $collection->getIterator();
+                    $iterator->uasort(
+                        function ($a, $b) use ($direction) {
+                            $aElem = strtolower($a->getName());
+                            $bElem = strtolower($b->getName());
+                            if ($aElem === $bElem) {
+                                return 0;
+                            }
+                            if ($direction === 'asc' && $aElem > $bElem || $direction === 'desc' && $aElem < $bElem) {
+                                return 1;
+                            }
+                            return -1;
+                        }
+                    );
+
+                    return $iterator;
                 }
             ),
         );

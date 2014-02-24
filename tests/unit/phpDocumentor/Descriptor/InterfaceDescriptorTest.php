@@ -12,6 +12,8 @@
 namespace phpDocumentor\Descriptor;
 
 use Mockery as m;
+use phpDocumentor\Descriptor\Tag\AuthorDescriptor;
+use phpDocumentor\Descriptor\Tag\VersionDescriptor;
 
 /**
  * Tests the functionality for the InterfaceDescriptor class.
@@ -99,6 +101,98 @@ class InterfaceDescriptorTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @covers phpDocumentor\Descriptor\DescriptorAbstract::getSummary
+     */
+    public function testSummaryInheritsWhenNoneIsPresent()
+    {
+        // Arrange
+        $summary = 'This is a summary';
+        $this->fixture->setSummary(null);
+        $parentInterface = $this->whenFixtureHasParentInterface();
+        $parentInterface->setSummary($summary);
+
+        // Act
+        $result = $this->fixture->getSummary();
+
+        // Assert
+        $this->assertSame($summary, $result);
+    }
+
+    /**
+     * @covers phpDocumentor\Descriptor\DescriptorAbstract::getDescription
+     */
+    public function testDescriptionInheritsWhenNoneIsPresent()
+    {
+        // Arrange
+        $description = 'This is a description';
+        $this->fixture->setDescription(null);
+        $parentInterface = $this->whenFixtureHasParentInterface();
+        $parentInterface->setDescription($description);
+
+        // Act
+        $result = $this->fixture->getDescription();
+
+        // Assert
+        $this->assertSame($description, $result);
+    }
+
+    /**
+     * @covers phpDocumentor\Descriptor\DescriptorAbstract::getAuthor
+     */
+    public function testAuthorTagsInheritWhenNoneArePresent()
+    {
+        // Arrange
+        $authorTagDescriptor = new AuthorDescriptor('author');
+        $authorCollection = new Collection(array($authorTagDescriptor));
+        $this->fixture->getTags()->clear();
+        $parentProperty = $this->whenFixtureHasParentInterface();
+        $parentProperty->getTags()->set('author', $authorCollection);
+
+        // Act
+        $result = $this->fixture->getAuthor();
+
+        // Assert
+        $this->assertSame($authorCollection, $result);
+    }
+
+    /**
+     * @covers phpDocumentor\Descriptor\DescriptorAbstract::getCopyright
+     */
+    public function testCopyrightTagsInheritWhenNoneArePresent()
+    {
+        // Arrange
+        $copyrightTagDescriptor = new TagDescriptor('copyright');
+        $copyrightCollection = new Collection(array($copyrightTagDescriptor));
+        $this->fixture->getTags()->clear();
+        $parentProperty = $this->whenFixtureHasParentInterface();
+        $parentProperty->getTags()->set('copyright', $copyrightCollection);
+
+        // Act
+        $result = $this->fixture->getCopyright();
+
+        // Assert
+        $this->assertSame($copyrightCollection, $result);
+    }
+
+    /**
+     * @covers phpDocumentor\Descriptor\DescriptorAbstract::getVersion
+     */
+    public function testVersionTagsInheritWhenNoneArePresent()
+    {
+        // Arrange
+        $versionTagDescriptor = new VersionDescriptor('version');
+        $versionCollection = new Collection(array($versionTagDescriptor));
+        $this->fixture->getTags()->clear();
+        $parentProperty = $this->whenFixtureHasParentInterface();
+        $parentProperty->getTags()->set('version', $versionCollection);
+
+        // Act
+        $result = $this->fixture->getVersion();
+
+        // Assert
+        $this->assertSame($versionCollection, $result);
+    }
+    /**
      * @covers phpDocumentor\Descriptor\InterfaceDescriptor::getInheritedConstants
      */
     public function testGetInheritedConstantsWithClassDescriptorParent()
@@ -175,4 +269,14 @@ class InterfaceDescriptorTest extends \PHPUnit_Framework_TestCase
         $this->assertSame(array($parentDescriptor, $grandParentDescriptor), $result->getAll());
     }
 
+    /**
+     * @return InterfaceDescriptor
+     */
+    protected function whenFixtureHasParentInterface()
+    {
+        $interface = new InterfaceDescriptor();
+        $this->fixture->getParent()->set('IA', $interface);
+
+        return $interface;
+    }
 }

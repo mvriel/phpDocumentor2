@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -55,13 +55,13 @@ abstract class AssemblerAbstract extends BaseAssembler
      */
     protected function extractPackageFromDocBlock($docBlock)
     {
-        $packageTaqs = $docBlock ? $docBlock->getTagsByName('package') : null;
-        if (! $packageTaqs) {
+        $packageTags = $docBlock ? $docBlock->getTagsByName('package') : null;
+        if (! $packageTags) {
             return null;
         }
 
         /** @var DocBlock\Tag $tag */
-        $tag = reset($packageTaqs);
+        $tag = reset($packageTags);
 
         return trim($tag->getContent());
     }

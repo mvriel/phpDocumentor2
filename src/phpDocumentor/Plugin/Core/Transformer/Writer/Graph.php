@@ -4,14 +4,13 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
 
 namespace phpDocumentor\Plugin\Core\Transformer\Writer;
 
-use Zend\Stdlib\Exception\ExtensionNotLoadedException;
 use phpDocumentor\Descriptor\ClassDescriptor;
 use phpDocumentor\Descriptor\Collection;
 use phpDocumentor\Descriptor\InterfaceDescriptor;
@@ -23,12 +22,13 @@ use phpDocumentor\GraphViz\Graph as GraphVizGraph;
 use phpDocumentor\GraphViz\Node;
 use phpDocumentor\Transformer\Transformation;
 use phpDocumentor\Transformer\Writer\WriterAbstract;
+use Zend\Stdlib\Exception\ExtensionNotLoadedException;
 
 /**
  * Writer responsible for generating various graphs.
  *
  * The Graph writer is capable of generating a Graph (as provided using the 'source' parameter) at the location provided
- * using the artefact parameter.
+ * using the artifact parameter.
  *
  * Currently supported:
  *
@@ -68,7 +68,12 @@ class Graph extends WriterAbstract
      */
     public function processClass(ProjectDescriptor $project, Transformation $transformation)
     {
-        $this->checkIfGraphVizIsInstalled();
+        try {
+            $this->checkIfGraphVizIsInstalled();
+        } catch (\Exception $e) {
+            echo $e->getMessage();
+            return;
+        }
 
         $this->nodeFont = $transformation->getParameter('font', 'Courier');
 
@@ -180,7 +185,7 @@ class Graph extends WriterAbstract
         }
 
         $sub_graph = GraphVizGraph::create('cluster_' . $full_namespace_name)
-            ->setLabel($namespace->getName())
+            ->setLabel($namespace->getName() == '\\' ? 'Global' : $namespace->getName())
             ->setStyle('rounded')
             ->setColor('gray')
             ->setFontColor('gray')

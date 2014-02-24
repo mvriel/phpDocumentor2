@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -19,6 +19,21 @@ use phpDocumentor\Transformer\Transformation;
  */
 abstract class WriterAbstract
 {
+    /**
+     * This method verifies whether PHP has all requirements needed to run this writer.
+     *
+     * If one of the requirements is missing for this Writer then an exception of type RequirementMissing
+     * should be thrown; this indicates to the calling process that this writer will not function.
+     *
+     * @throws Exception\RequirementMissing when a requirements is missing stating which one.
+     *
+     * @return void
+     */
+    public function checkRequirements()
+    {
+        // empty body since most writers do not have requirements
+    }
+
     /**
      * Abstract definition of the transformation method.
      *

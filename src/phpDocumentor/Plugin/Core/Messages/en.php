@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -27,5 +27,6 @@ return array(
     'PPC:ERR-50016' => 'The type hint of the argument is incorrect for the type definition '
         . 'of the @param tag with argument %s in %s',
     'PPC:ERR-50017' => 'The type for the %s tag in %s is "type"; isn\'t this an IDE default?',
+    'PPC:ERR-50018' => 'The type for the param tag %s in %s is either "type" or "unknown"; isn\'t this an IDE default?',
     'PPC:ERR-50020' => 'Not found required tag "%s" in %s',
 );

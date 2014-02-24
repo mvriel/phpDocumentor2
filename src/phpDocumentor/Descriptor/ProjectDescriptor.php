@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -13,6 +13,9 @@ namespace phpDocumentor\Descriptor;
 
 use phpDocumentor\Descriptor\ProjectDescriptor\Settings;
 
+/**
+ * Represents the entire project with its files, namespaces and indexes.
+ */
 class ProjectDescriptor implements Interfaces\ProjectInterface
 {
     /** @var string $name */
@@ -30,6 +33,9 @@ class ProjectDescriptor implements Interfaces\ProjectInterface
     /** @var Settings $settings */
     protected $settings;
 
+    /** @var Collection $partials */
+    protected $partials;
+
     /**
      * Initializes this descriptor.
      */
@@ -45,10 +51,16 @@ class ProjectDescriptor implements Interfaces\ProjectInterface
 
         $this->setFiles(new Collection());
         $this->setIndexes(new Collection());
+
+        $this->setPartials(new Collection());
     }
 
     /**
+     * Sets the name for this project.
+     *
      * @param string $name
+     *
+     * @return void
      */
     public function setName($name)
     {
@@ -56,6 +68,8 @@ class ProjectDescriptor implements Interfaces\ProjectInterface
     }
 
     /**
+     * Returns the name of this project.
+     *
      * @return string
      */
     public function getName()
@@ -64,7 +78,11 @@ class ProjectDescriptor implements Interfaces\ProjectInterface
     }
 
     /**
+     * Sets all files on this project.
+     *
      * @param Collection $files
+     *
+     * @return void
      */
     public function setFiles($files)
     {
@@ -72,6 +90,8 @@ class ProjectDescriptor implements Interfaces\ProjectInterface
     }
 
     /**
+     * Returns all files with their sub-elements.
+     *
      * @return Collection|FileDescriptor[]
      */
     public function getFiles()
@@ -80,7 +100,15 @@ class ProjectDescriptor implements Interfaces\ProjectInterface
     }
 
     /**
+     * Sets all indexes for this project.
+     *
+     * An index is a compilation of references to elements, usually constructed in a compiler step, that aids template
+     * generation by providing a conveniently assembled list. An example of such an index is the 'marker' index where
+     * a list of TODOs and FIXMEs are located in a central location for reporting.
+     *
      * @param Collection $indexes
+     *
+     * @return void
      */
     public function setIndexes(Collection $indexes)
     {
@@ -88,6 +116,10 @@ class ProjectDescriptor implements Interfaces\ProjectInterface
     }
 
     /**
+     * Returns all indexes in this project.
+     *
+     * @see setIndexes() for more information on what indexes are.
+     *
      * @return Collection
      */
     public function getIndexes()
@@ -96,7 +128,11 @@ class ProjectDescriptor implements Interfaces\ProjectInterface
     }
 
     /**
+     * Sets the root namespace for this project together with all sub-namespaces.
+     *
      * @param NamespaceDescriptor $namespace
+     *
+     * @return void
      */
     public function setNamespace($namespace)
     {
@@ -104,6 +140,8 @@ class ProjectDescriptor implements Interfaces\ProjectInterface
     }
 
     /**
+     * Returns the root (global) namespace.
+     *
      * @return NamespaceDescriptor
      */
     public function getNamespace()
@@ -131,6 +169,33 @@ class ProjectDescriptor implements Interfaces\ProjectInterface
     public function getSettings()
     {
         return $this->settings;
+    }
+
+    /**
+     * Sets all partials that can be used in a template.
+     *
+     * Partials are blocks of text that can be inserted anywhere in a template using a special indicator. An example is
+     * the introduction partial that can add a custom piece of text to the homepage.
+     *
+     * @param Collection $partials
+     *
+     * @return void
+     */
+    public function setPartials(Collection $partials)
+    {
+        $this->partials = $partials;
+    }
+
+    /**
+     * Returns a list of all partials.
+     *
+     * @see setPartials() for more information on partials.
+     *
+     * @return Collection
+     */
+    public function getPartials()
+    {
+        return $this->partials;
     }
 
     /**

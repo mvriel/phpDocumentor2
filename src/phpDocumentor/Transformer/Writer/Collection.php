@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -14,6 +14,7 @@ namespace phpDocumentor\Transformer\Writer;
 /**
  * Collection object for a set of Writers.
  */
+
 use phpDocumentor\Transformer\Router\Queue;
 
 class Collection extends \ArrayObject
@@ -79,5 +80,20 @@ class Collection extends \ArrayObject
         }
 
         return parent::offsetGet($index);
+    }
+
+    /**
+     * Iterates over each writer in this collection and checks its requirements.
+     *
+     * @throws Exception\RequirementMissing if a requirement of a writer is missing.
+     *
+     * @return void
+     */
+    public function checkRequirements()
+    {
+        /** @var WriterAbstract $writer */
+        foreach ($this as $writer) {
+            $writer->checkRequirements();
+        }
     }
 }

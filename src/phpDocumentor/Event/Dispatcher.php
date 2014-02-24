@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -12,6 +12,7 @@
 namespace phpDocumentor\Event;
 
 use Symfony\Component\EventDispatcher as Symfony;
+use Symfony\Component\EventDispatcher\Event;
 
 /**
  * Event Dispatching class.
@@ -73,13 +74,13 @@ class Dispatcher extends Symfony\EventDispatcher
      * and that the dispatch signature must remain intact.
      *
      * @param string $eventName
-     * @param EventAbstract $event
+     * @param Event  $event
      *
      * @codeCoverageIgnore Untestable and not really necessary
      *
      * @return EventAbstract
      */
-    public function dispatch($eventName, Symfony\Event $event = null)
+    public function dispatch($eventName, Event $event = null)
     {
         return parent::dispatch($eventName, $event);
     }

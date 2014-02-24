@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -14,36 +14,41 @@ namespace phpDocumentor\Descriptor;
 use phpDocumentor\Descriptor\Filter\Filterable;
 use phpDocumentor\Descriptor\Interfaces\ChildInterface;
 
+/**
+ * Base class for descriptors containing the most used options.
+ */
 abstract class DescriptorAbstract implements Filterable
 {
-    /** @var string */
+    /**
+     * @var string $fqsen Fully Qualified Structural Element Name; the FQCN including method, property of constant name
+     */
     protected $fqsen = '';
 
-    /** @var string */
+    /** @var string $name The local name for this element */
     protected $name = '';
 
-    /** @var NamespaceDescriptor $namespace */
+    /** @var NamespaceDescriptor $namespace The namespace for this element */
     protected $namespace;
 
-    /** @var string $package */
+    /** @var string $package The package with which this element is associated */
     protected $package = '';
 
-    /** @var string */
+    /** @var string $summary A summary describing the function of this element in short. */
     protected $summary = '';
 
-    /** @var string */
+    /** @var string $description A more extensive description of this element. */
     protected $description = '';
 
-    /** @var FileDescriptor */
+    /** @var FileDescriptor|null $file The file to which this element belongs; if applicable */
     protected $fileDescriptor;
 
-    /** @var int */
+    /** @var int $line The line number on which this element occurs. */
     protected $line = 0;
 
-    /** @var Collection */
+    /** @var Collection $tags The tags associated with this element. */
     protected $tags;
 
-    /** @var Collection */
+    /** @var Collection $errors A list of errors found while building this element. */
     protected $errors;
 
     /**
@@ -56,6 +61,8 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
+     * Sets the Fully Qualified Structural Element Name (FQSEN) for this element.
+     *
      * @param string $name
      *
      * @return void
@@ -66,6 +73,8 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
+     * Returns the Fully Qualified Structural Element Name (FQSEN) for this element.
+     *
      * @return string
      */
     public function getFullyQualifiedStructuralElementName()
@@ -74,6 +83,8 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
+     * Sets the local name for this element.
+     *
      * @param string $name
      *
      * @return void
@@ -84,6 +95,8 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
+     * Returns the local name for this element.
+     *
      * @return string
      */
     public function getName()
@@ -92,7 +105,9 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
-     * @param string|NamespaceDescriptor $namespace
+     * Sets the namespace (name) for this element.
+     *
+     * @param NamespaceDescriptor|string $namespace
      */
     public function setNamespace($namespace)
     {
@@ -100,6 +115,8 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
+     * Returns the namespace for this element or null if none is attached.
+     *
      * @return NamespaceDescriptor|string|null
      */
     public function getNamespace()
@@ -108,6 +125,8 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
+     * Sets the summary describing this element in short.
+     *
      * @param string $summary
      *
      * @return void
@@ -118,22 +137,29 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
+     * Returns the summary which describes this element.
+     *
+     * This method will automatically attempt to inherit the parent's summary if this one has none.
+     *
      * @return string
      */
     public function getSummary()
     {
-        // if the summary is not set, inherit it from the parent
-        if ((!$this->summary || strtolower(trim($this->summary)) == '{@inheritdoc}')
-            && ($this instanceof ChildInterface)
-            && ($this->getParent() instanceof self)
-        ) {
-            return $this->getParent()->getSummary();
+        if ($this->summary && strtolower(trim($this->summary)) != '{@inheritdoc}') {
+            return $this->summary;
+        }
+
+        $parent = $this->getInheritedElement();
+        if ($parent instanceof DescriptorAbstract) {
+            return $parent->getSummary();
         }
 
         return $this->summary;
     }
 
     /**
+     * Sets a description for this element.
+     *
      * @param string $description
      *
      * @return void
@@ -144,31 +170,46 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
+     * Returns the description for this element.
+     *
+     * This method will automatically attempt to inherit the parent's description if this one has none.
+     *
      * @return string
      */
     public function getDescription()
     {
-        // if the description is not set, inherit it from the parent
-        if (!$this->description && ($this instanceof ChildInterface) && ($this->getParent() instanceof self)) {
-            return $this->getParent()->getDescription();
+        if ($this->description && strpos(strtolower($this->description), '{@inheritdoc}') === false) {
+            return $this->description;
+        }
+
+        $parentElement = $this->getInheritedElement();
+        if ($parentElement instanceof DescriptorAbstract) {
+            $parentDescription = $parentElement->getDescription();
+            return $this->description
+                ? str_ireplace('{@inheritdoc}', $parentDescription, $this->description)
+                : $parentDescription;
         }
 
         return $this->description;
     }
 
     /**
+     * Sets the file and linenumber where this element is at.
+     *
      * @param FileDescriptor $file
-     * @param int    $line
+     * @param int            $line
      *
      * @return void
      */
     public function setLocation(FileDescriptor $file, $line = 0)
     {
-        $this->fileDescriptor = $file;
+        $this->setFile($file);
         $this->line = $line;
     }
 
     /**
+     * Returns the path to the file containing this element relative to the project's root.
+     *
      * @return string
      */
     public function getPath()
@@ -177,7 +218,9 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
-     * @return FileDescriptor
+     * Returns the file in which this element resides or null in case the element is not bound to a file..
+     *
+     * @return FileDescriptor|null
      */
     public function getFile()
     {
@@ -185,6 +228,20 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
+     * Sets the file to which this element is associated.
+     *
+     * @param FileDescriptor $file
+     *
+     * @return false
+     */
+    public function setFile(FileDescriptor $file)
+    {
+        $this->fileDescriptor = $file;
+    }
+
+    /**
+     * Returns the line number where the definition for this element can be found.
+     *
      * @return int
      */
     public function getLine()
@@ -205,6 +262,8 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
+     * Sets the tags associated with this element.
+     *
      * @param Collection $tags
      *
      * @return void
@@ -215,6 +274,8 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
+     * Returns the tags associated with this element.
+     *
      * @return Collection
      */
     public function getTags()
@@ -223,64 +284,53 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
-     * @param string $package
+     * Sets the name of the package to which this element belongs.
+     *
+     * @param PackageDescriptor $package
+     *
+     * @return void
      */
     public function setPackage($package)
     {
-        $this->package = trim($package);
+        $this->package = $package;
     }
 
     /**
-     * @return string
+     * Returns the package name for this element.
+     *
+     * @return PackageDescriptor
      */
     public function getPackage()
     {
-        // if the package is not set, inherit it from the parent
-        if (!$this->package && ($this instanceof ChildInterface) && ($this->getParent() instanceof self)) {
-            return $this->getParent()->getPackage();
+        if ($this->package instanceof PackageDescriptor) {
+            return $this->package;
         }
 
-        return $this->package;
+        $inheritedElement = $this->getInheritedElement();
+        if ($inheritedElement instanceof DescriptorAbstract) {
+            return $inheritedElement->getPackage();
+        }
+
+        return null;
     }
 
     /**
-     * @return Collection
-     */
-    public function getSubPackage()
-    {
-        /** @var Collection $subpackage */
-        $subpackage = $this->getTags()->get('subpackage', new Collection());
-
-        // if the subpackage is not set, inherit it from the parent
-        if ($subpackage->count() == 0
-            && ($this instanceof ChildInterface)
-            && ($this->getParent() instanceof self)
-            && ($this->getParent()->getPackage() == $this->getPackage())
-        ) {
-            return $this->getParent()->getSubPackage();
-        }
-
-        $subpackageDescriptor = current(current($subpackage));
-
-        return $subpackageDescriptor ? $subpackageDescriptor->getDescription() : '';
-    }
-
-    /**
-     * Returns the authors for this element.
-     *
      * @return Collection
      */
     public function getAuthor()
     {
         /** @var Collection $author */
         $author = $this->getTags()->get('author', new Collection());
-
-        // if the author is not set, inherit it from the parent
-        if ($author->count() == 0 && ($this instanceof ChildInterface) && ($this->getParent() instanceof self)) {
-            return $this->getParent()->getAuthor();
+        if ($author->count() != 0) {
+            return $author;
         }
 
-        return $author;
+        $inheritedElement = $this->getInheritedElement();
+        if ($inheritedElement) {
+            return $inheritedElement->getAuthor();
+        }
+
+        return new Collection();
     }
 
     /**
@@ -292,13 +342,16 @@ abstract class DescriptorAbstract implements Filterable
     {
         /** @var Collection $version */
         $version = $this->getTags()->get('version', new Collection());
-
-        // if the version is not set, inherit it from the parent
-        if ($version->count() == 0 && ($this instanceof ChildInterface) && ($this->getParent() instanceof self)) {
-            return $this->getParent()->getVersion();
+        if ($version->count() != 0) {
+            return $version;
         }
 
-        return $version;
+        $inheritedElement = $this->getInheritedElement();
+        if ($inheritedElement) {
+            return $inheritedElement->getVersion();
+        }
+
+        return new Collection();
     }
 
     /**
@@ -310,13 +363,16 @@ abstract class DescriptorAbstract implements Filterable
     {
         /** @var Collection $copyright */
         $copyright = $this->getTags()->get('copyright', new Collection());
-
-        // if the copyright is not set, inherit it from the parent
-        if ($copyright->count() == 0 && ($this instanceof ChildInterface) && ($this->getParent() instanceof self)) {
-            return $this->getParent()->getCopyright();
+        if ($copyright->count() != 0) {
+            return $copyright;
         }
 
-        return $copyright;
+        $inheritedElement = $this->getInheritedElement();
+        if ($inheritedElement) {
+            return $inheritedElement->getCopyright();
+        }
+
+        return new Collection();
     }
 
     /**
@@ -330,6 +386,8 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
+     * Sets a list of all errors associated with this element.
+     *
      * @param Collection $errors
      */
     public function setErrors(Collection $errors)
@@ -338,6 +396,8 @@ abstract class DescriptorAbstract implements Filterable
     }
 
     /**
+     * Returns all errors that occur in this element.
+     *
      * @return Collection
      */
     public function getErrors()
@@ -376,5 +436,13 @@ abstract class DescriptorAbstract implements Filterable
     public function __toString()
     {
         return $this->getFullyQualifiedStructuralElementName();
+    }
+
+    /**
+     * @return DescriptorAbstract|null
+     */
+    protected function getInheritedElement()
+    {
+        return null;
     }
 }

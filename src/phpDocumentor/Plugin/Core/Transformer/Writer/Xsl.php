@@ -11,18 +11,55 @@
 
 namespace phpDocumentor\Plugin\Core\Transformer\Writer;
 
-use Psr\Log\LogLevel;
-use Zend\I18n\Exception\RuntimeException;
+use Monolog\Logger;
+use phpDocumentor\Application;
 use phpDocumentor\Descriptor\ProjectDescriptor;
+use phpDocumentor\Event\Dispatcher;
 use phpDocumentor\Plugin\Core\Exception;
+use phpDocumentor\Transformer\Event\PreXslWriterEvent;
 use phpDocumentor\Transformer\Transformation;
+use phpDocumentor\Transformer\Transformation as TransformationObject;
+use phpDocumentor\Transformer\Writer\Exception\RequirementMissing;
+use phpDocumentor\Transformer\Writer\WriterAbstract;
 
 /**
  * XSL transformation writer; generates static HTML out of the structure and XSL templates.
  */
-class Xsl extends \phpDocumentor\Transformer\Writer\WriterAbstract
+class Xsl extends WriterAbstract
 {
+    /** @var \Monolog\Logger $logger */
+    protected $logger;
+
     protected $xsl_variables = array();
+
+    /**
+     * Initialize this writer with the logger so that it can output logs.
+     *
+     * @param Logger $logger
+     */
+    public function __construct(Logger $logger)
+    {
+        $this->logger = $logger;
+    }
+
+    /**
+     * Checks whether XSL handling is enabled with PHP as that is not enabled by default.
+     *
+     * To enable XSL handling you need either the xsl extension or the xslcache extension installed.
+     *
+     * @throws RequirementMissing if neither xsl extensions are installed.
+     *
+     * @return void
+     */
+    public function checkRequirements()
+    {
+        if (!class_exists('XSLTProcessor') && (!extension_loaded('xslcache'))) {
+            throw new RequirementMissing(
+                'The XSL writer was unable to find your XSLTProcessor; '
+                . 'please check if you have installed the PHP XSL extension or XSLCache extension'
+            );
+        }
+    }
 
     /**
      * This method combines the structure.xml and the given target template
@@ -31,23 +68,20 @@ class Xsl extends \phpDocumentor\Transformer\Writer\WriterAbstract
      * @param ProjectDescriptor $project        Document containing the structure.
      * @param Transformation    $transformation Transformation to execute.
      *
+     * @throws \RuntimeException if the structure.xml file could not be found.
+     * @throws Exception        if the structure.xml file's documentRoot could not be read because of encoding issues
+     *    or because it was absent.
+     *
      * @return void
      */
     public function transform(ProjectDescriptor $project, Transformation $transformation)
     {
-        if (!class_exists('XSLTProcessor')) {
-            throw new Exception(
-                'The XSL writer was unable to find your XSLTProcessor; '
-                . 'please check if you have installed the PHP XSL extension'
-            );
-        }
-
         $artifact = $transformation->getTransformer()->getTarget()
             . DIRECTORY_SEPARATOR . $transformation->getArtifact();
 
         $structureFilename = $transformation->getTransformer()->getTarget() . DIRECTORY_SEPARATOR . 'structure.xml';
         if (!is_readable($structureFilename)) {
-            throw new RuntimeException(
+            throw new \RuntimeException(
                 'Structure.xml file was not found in the target directory, is the XML writer missing from the '
                 . 'template definition?'
             );
@@ -58,17 +92,10 @@ class Xsl extends \phpDocumentor\Transformer\Writer\WriterAbstract
         libxml_use_internal_errors(true);
         $structure->load($structureFilename);
 
-        if (extension_loaded('xslcache')) {
-            $proc = new \XSLTCache();
-            $proc->importStyleSheet($transformation->getSourceAsPath(), true);
-        } else {
-            $xsl = new \DOMDocument();
-            $xsl->load($transformation->getSourceAsPath());
-
-            $proc = new \XSLTProcessor();
-            $proc->importStyleSheet($xsl);
-        }
+        $proc = $this->getXslProcessor($transformation);
         
+        $proc->registerPHPFunctions();
+
         if (empty($structure->documentElement)) {
             $message = 'Specified DOMDocument lacks documentElement, cannot transform.';
             if (libxml_get_last_error()) {
@@ -81,7 +108,7 @@ class Xsl extends \phpDocumentor\Transformer\Writer\WriterAbstract
         $proc->setParameter('', 'title', $structure->documentElement->getAttribute('title'));
         $proc->setParameter('', 'root', str_repeat('../', substr_count($transformation->getArtifact(), '/')));
         $proc->setParameter('', 'search_template', $transformation->getParameter('search', 'none'));
-        $proc->setParameter('', 'version', \phpDocumentor\Application::$VERSION);
+        $proc->setParameter('', 'version', Application::$VERSION);
         $proc->setParameter('', 'generated_datetime', date('r'));
 
         // check parameters for variables and add them when found
@@ -97,9 +124,9 @@ class Xsl extends \phpDocumentor\Transformer\Writer\WriterAbstract
             $qry = $xpath->query($transformation->getQuery());
             $count = $qry->length;
             foreach ($qry as $key => $element) {
-                \phpDocumentor\Event\Dispatcher::getInstance()->dispatch(
+                Dispatcher::getInstance()->dispatch(
                     'transformer.writer.xsl.pre',
-                    \phpDocumentor\Transformer\Event\PreXslWriterEvent
+                    PreXslWriterEvent
                     ::createInstance($this)->setElement($element)
                     ->setProgress(array($key+1, $count))
                 );
@@ -154,14 +181,14 @@ class Xsl extends \phpDocumentor\Transformer\Writer\WriterAbstract
     /**
      * Sets the parameters of the XSLT processor.
      *
-     * @param \phpDocumentor\Transformer\Transformation $transformation Transformation.
-     * @param \XSLTProcessor                      $proc           XSLTProcessor.
+     * @param TransformationObject $transformation Transformation.
+     * @param \XSLTProcessor       $proc           XSLTProcessor.
      *
      * @return void
      */
     public function setProcessorParameters(
-        \phpDocumentor\Transformer\Transformation $transformation,
-        \XSLTProcessor $proc
+        TransformationObject $transformation,
+        $proc
     ) {
         foreach ($this->xsl_variables as $key => $variable) {
             // XSL does not allow both single and double quotes in a string
@@ -189,6 +216,37 @@ class Xsl extends \phpDocumentor\Transformer\Writer\WriterAbstract
             foreach ($parameters['variables'] as $key => $value) {
                 $proc->setParameter('', $key, $value);
             }
+        }
+    }
+
+    /**
+     *
+     *
+     * @param Transformation $transformation
+     *
+     * @return \XSLTCache|\XSLTProcessor
+     */
+    protected function getXslProcessor(Transformation $transformation)
+    {
+        $xslTemplatePath = $transformation->getSourceAsPath();
+        $this->logger->debug('Loading XSL template: ' . $xslTemplatePath);
+        if (!file_exists($xslTemplatePath)) {
+            throw new Exception('Unable to find XSL template "' . $xslTemplatePath . '"');
+        }
+
+        if (extension_loaded('xslcache')) {
+            $proc = new \XSLTCache();
+            $proc->importStyleSheet($xslTemplatePath, true);
+
+            return $proc;
+        } else {
+            $xsl = new \DOMDocument();
+            $xsl->load($xslTemplatePath);
+
+            $proc = new \XSLTProcessor();
+            $proc->importStyleSheet($xsl);
+
+            return $proc;
         }
     }
 }

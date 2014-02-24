@@ -1,3 +1,50 @@
+2014/03/16: Version 2.4
+-----------------------
+
+```
+CHANGED:   #1128: Minimum Symfony/Console version was set at 2.3 to support LTS version
+```
+
+2014/02/16: Version 2.3
+-----------------------
+
+```
+ADDED:     Support for writing PDF files using a Twig template by adding the PDF writer.
+ADDED:     More documentation on types, running phpDocumentor, the @var tag.
+ADDED:     Support for sorting lists with Twig and XSLT.
+ADDED:     Basic support for generating reference documentation with ReST documents.
+CHANGED:   Replaced custom phar building with the library from http://box-project.org.
+FIXED:     #1090: GraphViz issues where the global namespace caused GraphViz not to generate.
+FIXED:     #1037 by @siad007: if opcode cache is enabled for CLI then annotations are dropped.
+FIXED:     #1031: Fixed inheritance for the summary, description, tags and the way @inheritdoc works.
+FIXED:     Adding several unit tests.
+FIXED:     Cleaned up code to remove warnings and errors.
+FIXED:     #1111: An infinite loop occurred during processing of global constants.
+FIXED:     Crash that occurred when building a tree of packages.
+FIXED:     Crash that occurred when an interface was not recognized.
+FIXED:     XSLTCache extension could not be used instead of XSLTProcessor due to a stray typehint.
+FIXED:     #1110: Crash on incomplete `define` definition.
+FIXED:     #949: `@inheritdoc` is not working with interfaces.
+```
+
+2013/11/23: Version 2.2
+-----------------------
+
+```
+ADDED:     Information how to donate to phpDocumentor using gittip
+ADDED:     Profiling information and process
+CHANGED:   Moved the external class documentation code to their own router
+CHANGED:   #1080: Replaced MarkDownExtra dependency with Parsedown
+CHANGED:   Rewrote a lot of the documentation; still a work in progress
+FIXED:     #720: External class documentation had ../files prepended
+FIXED:     #932: Todo tags did not show up in Twig templates
+FIXED:     #1049: Arguments passed by reference did not show up as being by reference
+FIXED:     #1075: Prevent output from wrapping in Windows console
+FIXED:     Cleaned up code based on Continuous Integration messages
+FIXED:     Timezone issues on some machines
+FIXED:     Various issues in several templates
+```
+
 2013/09/28: Version 2.1
 -----------------------
 
@@ -7,12 +54,25 @@ ADDED:     Verbosity can now be provided in three level, each indicating how muc
 ADDED:     Support for the XSLCache drop in replacement of ext/xsl
 ADDED:     Locale can now be supplied in the configuration
 ADDED:     German translation for error messages
+ADDED:     Support to insert Markdown files into specific points of the outputted documentation (partials)
+ADDED:     Deprecated tag now registers the version number since when the associated element was deprecated
+ADDED:     Show which traits are consumed by a class
+ADDED:     Link to the traits that are consumed by a class
+ADDED:     Show traits with their methods and properties
+CHANGED:   phpDocumentor now checks for transformation requirements at the start of the application (#148)
+FIXED:     Fatal error with some of the old-style validations
+FIXED:     Template:list command errors due to an incorrect path
+FIXED:     Checkstyle error report only showed errors of the file itself and not subelements (#1046)
 FIXED:     Validation to check for validity of return types
+FIXED:     Validation to check for validity of parameters
 FIXED:     Fatal error when a parent interface is not in the project
 FIXED:     Template:list does not throw an error
 FIXED:     XML output correctly exposes @see, @link, @version
 FIXED:     XML output now does not choke on special characters
 FIXED:     Error code for return type was incorrect
+FIXED:     Functions in the responsive twig now unfold to show complete contents
+FIXED:     Constants in the responsive twig now unfold to show complete contents
+FIXED:     Using an ampersand in the type of an @param no longer causes a fatal (not a recommended practice!)
 REMOVED:   #814; removed ParserAbstract base class for Parser
 REMOVED:   PSR Draft is now moved to its own repo: https://github.com/phpDocumentor/fig-standards/blob/master/proposed/phpdoc.md
 REMOVED:   Automatic generation of log files, the new log option can be used or a configuration option

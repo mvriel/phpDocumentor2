@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -12,19 +12,23 @@
 namespace phpDocumentor\Plugin\Core\Transformer\Writer;
 
 use phpDocumentor\Descriptor\Validator\Error;
+use phpDocumentor\Plugin\Core\Transformer\Writer\Xml\ArgumentConverter;
+use phpDocumentor\Plugin\Core\Transformer\Writer\Xml\ConstantConverter;
+use phpDocumentor\Plugin\Core\Transformer\Writer\Xml\DocBlockConverter;
+use phpDocumentor\Plugin\Core\Transformer\Writer\Xml\InterfaceConverter;
+use phpDocumentor\Plugin\Core\Transformer\Writer\Xml\MethodConverter;
+use phpDocumentor\Plugin\Core\Transformer\Writer\Xml\PropertyConverter;
+use phpDocumentor\Plugin\Core\Transformer\Writer\Xml\TagConverter;
+use phpDocumentor\Plugin\Core\Transformer\Writer\Xml\TraitConverter;
 use phpDocumentor\Transformer\Writer\WriterAbstract;
 use phpDocumentor\Transformer\Writer\Translatable;
 use phpDocumentor\Application;
-use phpDocumentor\Descriptor\ArgumentDescriptor;
 use phpDocumentor\Descriptor\ClassDescriptor;
 use phpDocumentor\Descriptor\ConstantDescriptor;
-use phpDocumentor\Descriptor\DescriptorAbstract;
 use phpDocumentor\Descriptor\FileDescriptor;
 use phpDocumentor\Descriptor\FunctionDescriptor;
 use phpDocumentor\Descriptor\InterfaceDescriptor;
-use phpDocumentor\Descriptor\MethodDescriptor;
 use phpDocumentor\Descriptor\ProjectDescriptor;
-use phpDocumentor\Descriptor\PropertyDescriptor;
 use phpDocumentor\Descriptor\TraitDescriptor;
 use phpDocumentor\Plugin\Core\Transformer\Behaviour\Tag\AuthorTag;
 use phpDocumentor\Plugin\Core\Transformer\Behaviour\Tag\CoversTag;
@@ -37,7 +41,6 @@ use phpDocumentor\Plugin\Core\Transformer\Behaviour\Tag\PropertyTag;
 use phpDocumentor\Plugin\Core\Transformer\Behaviour\Tag\ReturnTag;
 use phpDocumentor\Plugin\Core\Transformer\Behaviour\Tag\UsesTag;
 use phpDocumentor\Plugin\Core\Transformer\Behaviour\Tag\VarTag;
-use phpDocumentor\Reflection\BaseReflector;
 use phpDocumentor\Reflection\DocBlock\Tag;
 use phpDocumentor\Transformer\Transformation;
 use phpDocumentor\Transformer\Transformer;
@@ -45,10 +48,6 @@ use phpDocumentor\Translator;
 
 /**
  * Converts the structural information of phpDocumentor into an XML file.
- *
- * @todo this class currently only contains the old AST format for phpDocumentor; refactor!
- * @todo merge checkstyle writer into this one with query checkstyle
- * @todo the packages may not be propagated correctly, check it
  */
 class Xml extends WriterAbstract implements Translatable
 {
@@ -57,6 +56,39 @@ class Xml extends WriterAbstract implements Translatable
 
     /** @var Translator $translator */
     protected $translator;
+
+    protected $docBlockConverter;
+
+    protected $argumentConverter;
+
+    protected $methodConverter;
+
+    protected $propertyConverter;
+
+    protected $constantConverter;
+
+    protected $interfaceConverter;
+
+    protected $traitConverter;
+
+    public function __construct()
+    {
+        $this->docBlockConverter  = new DocBlockConverter(new TagConverter());
+        $this->argumentConverter  = new ArgumentConverter();
+        $this->methodConverter    = new MethodConverter($this->argumentConverter, $this->docBlockConverter);
+        $this->propertyConverter  = new PropertyConverter($this->docBlockConverter);
+        $this->constantConverter  = new ConstantConverter($this->docBlockConverter);
+        $this->interfaceConverter = new InterfaceConverter(
+            $this->docBlockConverter,
+            $this->methodConverter,
+            $this->constantConverter
+        );
+        $this->traitConverter = new TraitConverter(
+            $this->docBlockConverter,
+            $this->methodConverter,
+            $this->propertyConverter
+        );
+    }
 
     /**
      * Returns an instance of the object responsible for translating content.
@@ -99,6 +131,8 @@ class Xml extends WriterAbstract implements Translatable
         $document_element->setAttribute('title', $project->getName());
         $document_element->setAttribute('version', Application::$VERSION);
 
+        $this->buildPartials($document_element, $project);
+
         $transformer = $transformation->getTransformer();
 
         foreach ($project->getFiles() as $file) {
@@ -109,11 +143,20 @@ class Xml extends WriterAbstract implements Translatable
         file_put_contents($artifact, $this->xml->saveXML());
     }
 
-    protected function buildFile(
-        \DOMElement $parent,
-        FileDescriptor $file,
-        Transformer $transformer
-    ) {
+    protected function buildPartials(\DOMElement $parent, ProjectDescriptor $project)
+    {
+        $child = new \DOMElement('partials');
+        $parent->appendChild($child);
+        foreach ($project->getPartials() as $name => $element) {
+            $partial = new \DOMElement('partial');
+            $child->appendChild($partial);
+            $partial->setAttribute('name', $name);
+            $partial->appendChild(new \DOMText($element));
+        }
+    }
+
+    protected function buildFile(\DOMElement $parent, FileDescriptor $file, Transformer $transformer)
+    {
         $child = new \DOMElement('file');
         $parent->appendChild($child);
 
@@ -125,7 +168,7 @@ class Xml extends WriterAbstract implements Translatable
         );
         $child->setAttribute('hash', $file->getHash());
 
-        $this->buildDocBlock($child, $file);
+        $this->docBlockConverter->convert($child, $file);
 
         // add namespace aliases
         foreach ($file->getNamespaceAliases() as $alias => $namespace) {
@@ -136,7 +179,7 @@ class Xml extends WriterAbstract implements Translatable
 
         /** @var ConstantDescriptor $constant */
         foreach ($file->getConstants() as $constant) {
-            $this->buildConstant($child, $constant);
+            $this->constantConverter->convert($child, $constant);
         }
 
         /** @var FunctionDescriptor $function */
@@ -146,12 +189,17 @@ class Xml extends WriterAbstract implements Translatable
 
         /** @var InterfaceDescriptor $interface */
         foreach ($file->getInterfaces() as $interface) {
-            $this->buildInterface($child, $interface);
+            $this->interfaceConverter->convert($child, $interface);
         }
 
         /** @var ClassDescriptor $class */
         foreach ($file->getClasses() as $class) {
             $this->buildClass($child, $class);
+        }
+
+        /** @var TraitDescriptor $class */
+        foreach ($file->getTraits() as $trait) {
+            $this->traitConverter->convert($child, $trait);
         }
 
         // add markers
@@ -222,49 +270,6 @@ class Xml extends WriterAbstract implements Translatable
     }
 
     /**
-     * Exports the given constant to the parent XML element.
-     *
-     * This method creates a new child element on the given parent XML element
-     * and takes the properties of the Reflection argument and sets the
-     * elements and attributes on the child.
-     *
-     * If a child DOMElement is provided then the properties and attributes are
-     * set on this but the child element is not appended onto the parent. This
-     * is the responsibility of the invoker. Essentially this means that the
-     * $parent argument is ignored in this case.
-     *
-     * @param \DOMElement        $parent   The parent element to augment.
-     * @param ConstantDescriptor $constant The data source.
-     * @param \DOMElement        $child    Optional: child element to use instead of creating a new one on the $parent.
-     *
-     * @return void
-     */
-    public function buildConstant(\DOMElement $parent, ConstantDescriptor $constant, \DOMElement $child = null)
-    {
-        if (!$constant->getName()) {
-            return;
-        }
-
-        if (!$child) {
-            $child = new \DOMElement('constant');
-            $parent->appendChild($child);
-        }
-
-        $namespace = $constant->getNamespace()
-            ? $constant->getNamespace()
-            : $parent->getAttribute('namespace');
-        $child->setAttribute('namespace', ltrim($namespace, '\\'));
-        $child->setAttribute('line', $constant->getLine());
-
-        $child->appendChild(new \DOMElement('name', $constant->getName()));
-        $child->appendChild(new \DOMElement('full_name', $constant->getFullyQualifiedStructuralElementName()));
-
-        $child->appendChild(new \DOMElement('value'))->appendChild(new \DOMText($constant->getValue()));
-
-        $this->buildDocBlock($child, $constant);
-    }
-
-    /**
      * Export this function definition to the given parent DOMElement.
      *
      * @param \DOMElement        $parent   Element to augment.
@@ -289,45 +294,11 @@ class Xml extends WriterAbstract implements Translatable
         $child->appendChild(new \DOMElement('name', $function->getName()));
         $child->appendChild(new \DOMElement('full_name', $function->getFullyQualifiedStructuralElementName()));
 
-        $this->buildDocBlock($child, $function);
+        $this->docBlockConverter->convert($child, $function);
 
         foreach ($function->getArguments() as $argument) {
-            $this->buildArgument($child, $argument);
+            $this->argumentConverter->convert($child, $argument);
         }
-    }
-
-    /**
-     * Exports the given reflection object to the parent XML element.
-     *
-     * This method creates a new child element on the given parent XML element
-     * and takes the properties of the Reflection argument and sets the
-     * elements and attributes on the child.
-     *
-     * If a child DOMElement is provided then the properties and attributes are
-     * set on this but the child element is not appended onto the parent. This
-     * is the responsibility of the invoker. Essentially this means that the
-     * $parent argument is ignored in this case.
-     *
-     * @param \DOMElement        $parent   The parent element to augment.
-     * @param ArgumentDescriptor $argument The data source.
-     * @param \DOMElement        $child    Optional: child element to use instead of creating a new one on the $parent.
-     *
-     * @return void
-     */
-    public function buildArgument(\DOMElement $parent, ArgumentDescriptor $argument, \DOMElement $child = null)
-    {
-        if (!$child) {
-            $child = new \DOMElement('argument');
-            $parent->appendChild($child);
-        }
-
-        $child->setAttribute('line', $argument->getLine());
-        $child->appendChild(new \DOMElement('name', $argument->getName()));
-        $child->appendChild(new \DOMElement('default'))
-            ->appendChild(new \DOMText($argument->getDefault()));
-
-        $types = $argument->getTypes();
-        $child->appendChild(new \DOMElement('type', implode('|', $types)));
     }
 
     /**
@@ -366,10 +337,10 @@ class Xml extends WriterAbstract implements Translatable
 
         /** @var InterfaceDescriptor $interface */
         foreach ($class->getInterfaces() as $interface) {
-            $interfaceFcqn = is_string($interface)
+            $interfaceFqcn = is_string($interface)
                 ? $interface
                 : $interface->getFullyQualifiedStructuralElementName();
-            $child->appendChild(new \DOMElement('implements', $interfaceFcqn));
+            $child->appendChild(new \DOMElement('implements', $interfaceFqcn));
         }
 
         if ($child === null) {
@@ -384,345 +355,47 @@ class Xml extends WriterAbstract implements Translatable
         $child->appendChild(new \DOMElement('name', $class->getName()));
         $child->appendChild(new \DOMElement('full_name', $class->getFullyQualifiedStructuralElementName()));
 
-        $this->buildDocBlock($child, $class);
+        $this->docBlockConverter->convert($child, $class);
 
         foreach ($class->getConstants() as $constant) {
             // TODO #840: Workaround; for some reason there are NULLs in the constants array.
             if ($constant) {
-                $this->buildConstant($child, $constant);
+                $this->constantConverter->convert($child, $constant);
+            }
+        }
+
+        foreach ($class->getInheritedConstants() as $constant) {
+            // TODO #840: Workaround; for some reason there are NULLs in the constants array.
+            if ($constant) {
+                $this->constantConverter->convert($child, $constant);
             }
         }
 
         foreach ($class->getProperties() as $property) {
             // TODO #840: Workaround; for some reason there are NULLs in the properties array.
             if ($property) {
-                $this->buildProperty($child, $property);
+                $this->propertyConverter->convert($child, $property);
+            }
+        }
+
+        foreach ($class->getInheritedProperties() as $property) {
+            // TODO #840: Workaround; for some reason there are NULLs in the properties array.
+            if ($property) {
+                $this->propertyConverter->convert($child, $property);
             }
         }
 
         foreach ($class->getMethods() as $method) {
             // TODO #840: Workaround; for some reason there are NULLs in the methods array.
             if ($method) {
-                $this->buildMethod($child, $method);
+                $this->methodConverter->convert($child, $method);
             }
         }
-    }
 
-    /**
-     * Exports the given reflection object to the parent XML element.
-     *
-     * This method creates a new child element on the given parent XML element
-     * and takes the properties of the Reflection argument and sets the
-     * elements and attributes on the child.
-     *
-     * If a child DOMElement is provided then the properties and attributes are
-     * set on this but the child element is not appended onto the parent. This
-     * is the responsibility of the invoker. Essentially this means that the
-     * $parent argument is ignored in this case.
-     *
-     * @param \DOMElement     $parent The parent element to augment.
-     * @param ClassDescriptor $trait  The data source.
-     * @param \DOMElement     $child  Optional: child element to use instead of creating a
-     *      new one on the $parent.
-     *
-     * @return void
-     */
-    public function buildTrait(\DOMElement $parent, TraitDescriptor $trait, \DOMElement $child = null)
-    {
-        if (!$child) {
-            $child = new \DOMElement('trait');
-            $parent->appendChild($child);
-        }
-
-        $child->setAttribute('final', $trait->isFinal() ? 'true' : 'false');
-        $child->setAttribute('abstract', $trait->isAbstract() ? 'true' : 'false');
-
-        $namespace = $trait->getNamespace();
-        $child->setAttribute('namespace', ltrim($namespace, '\\'));
-        $child->setAttribute('line', $trait->getLine());
-
-        $child->appendChild(new \DOMElement('name', $trait->getName()));
-        $child->appendChild(new \DOMElement('full_name', $trait->getFullyQualifiedStructuralElementName()));
-
-        $this->buildDocBlock($child, $trait);
-
-        foreach ($trait->getProperties() as $property) {
-            $this->buildProperty($child, $property);
-        }
-
-        foreach ($trait->getMethods() as $method) {
-            $this->buildMethod($child, $method);
-        }
-    }
-
-    /**
-     * Exports the given reflection object to the parent XML element.
-     *
-     * This method creates a new child element on the given parent XML element
-     * and takes the properties of the Reflection argument and sets the
-     * elements and attributes on the child.
-     *
-     * If a child DOMElement is provided then the properties and attributes are
-     * set on this but the child element is not appended onto the parent. This
-     * is the responsibility of the invoker. Essentially this means that the
-     * $parent argument is ignored in this case.
-     *
-     * @param \DOMElement                         $parent The parent element to augment.
-     * @param InterfaceDescriptor $interface  The data source.
-     * @param \DOMElement                         $child  Optional: child element to use instead of creating a
-     *      new one on the $parent.
-     *
-     * @return void
-     */
-    public function buildInterface(\DOMElement $parent, InterfaceDescriptor $interface, \DOMElement $child = null)
-    {
-        if (!$child) {
-            $child = new \DOMElement('interface');
-            $parent->appendChild($child);
-        }
-
-        /** @var InterfaceDescriptor $parentInterface */
-        foreach ($interface->getParent() as $parentInterface) {
-            $parentFqcn = is_string($parentInterface) === false
-                ? $parentInterface->getFullyQualifiedStructuralElementName()
-                : $parentInterface;
-            $child->appendChild(new \DOMElement('extends', $parentFqcn));
-        }
-
-        $namespace = $interface->getNamespace()->getFullyQualifiedStructuralElementName();
-        $child->setAttribute('namespace', ltrim($namespace, '\\'));
-        $child->setAttribute('line', $interface->getLine());
-
-        $child->appendChild(new \DOMElement('name', $interface->getName()));
-        $child->appendChild(new \DOMElement('full_name', $interface->getFullyQualifiedStructuralElementName()));
-
-        $this->buildDocBlock($child, $interface);
-
-        foreach ($interface->getConstants() as $constant) {
-            $this->buildConstant($child, $constant);
-        }
-
-        foreach ($interface->getMethods() as $method) {
-            $this->buildMethod($child, $method);
-        }
-    }
-
-    /**
-     * Export the given property definition to the provided parent element.
-     *
-     * @param \DOMElement        $parent   Element to augment.
-     * @param PropertyDescriptor $property Element to export.
-     *
-     * @return void
-     */
-    public function buildProperty(\DOMElement $parent, PropertyDescriptor $property)
-    {
-        $child = new \DOMElement('property');
-        $parent->appendChild($child);
-
-        $child->setAttribute('static', $property->isStatic() ? 'true' : 'false');
-        $child->setAttribute('visibility', $property->getVisibility());
-
-        $child->setAttribute('line', $property->getLine());
-
-        $namespaceFqnn = $property->getNamespace()
-            ? $property->getNamespace()->getFullyQualifiedStructuralElementName()
-            : $parent->getAttribute('namespace');
-        $child->setAttribute('namespace', $namespaceFqnn);
-
-        $child->appendChild(new \DOMElement('name', '$' . $property->getName()));
-        $child->appendChild(new \DOMElement('default'))
-            ->appendChild(new \DOMText($property->getDefault()));
-
-        $this->buildDocBlock($child, $property);
-    }
-
-    /**
-     * Export the given reflected method definition to the provided parent element.
-     *
-     * @param \DOMElement     $parent Element to augment.
-     * @param MethodDescriptor $method Element to export.
-     *
-     * @return \DOMElement
-     */
-    public function buildMethod(\DOMElement $parent, MethodDescriptor $method)
-    {
-        $child = new \DOMElement('method');
-        $parent->appendChild($child);
-
-        $child->setAttribute('final', $method->isFinal() ? 'true' : 'false');
-        $child->setAttribute('abstract', $method->isAbstract() ? 'true' : 'false');
-        $child->setAttribute('static', $method->isStatic() ? 'true' : 'false');
-        $child->setAttribute('visibility', $method->getVisibility());
-
-        $namespaceFqnn = $method->getNamespace()
-            ? $method->getNamespace()->getFullyQualifiedStructuralElementName()
-            : $parent->getAttribute('namespace');
-        $child->setAttribute('namespace', $namespaceFqnn);
-        $child->setAttribute('line', $method->getLine());
-
-        $child->appendChild(new \DOMElement('name', $method->getName()));
-        $child->appendChild(new \DOMElement('full_name', $method->getFullyQualifiedStructuralElementName()));
-
-        $this->buildDocBlock($child, $method);
-
-        foreach ($method->getArguments() as $argument) {
-            $this->buildArgument($child, $argument);
-        }
-
-        return $child;
-    }
-
-    /**
-     * Exports the given reflection object to the parent XML element.
-     *
-     * This method creates a new child element on the given parent XML element
-     * and takes the properties of the Reflection argument and sets the
-     * elements and attributes on the child.
-     *
-     * If a child DOMElement is provided then the properties and attributes are
-     * set on this but the child element is not appended onto the parent. This
-     * is the responsibility of the invoker. Essentially this means that the
-     * $parent argument is ignored in this case.
-     *
-     * @param \DOMElement        $parent  The parent element to augment.
-     * @param DescriptorAbstract $element The data source.
-     *
-     * @return void
-     */
-    public function buildDocBlock(\DOMElement $parent, DescriptorAbstract $element)
-    {
-        $child = new \DOMElement('docblock');
-        $parent->appendChild($child);
-
-        $child->setAttribute('line', $element->getLine());
-        $parent->setAttribute('package', ltrim($element->getPackage(), '\\'));
-
-        $this->addDescription($child, $element);
-        $this->addLongDescription($child, $element);
-        $this->addTags($child, $element);
-    }
-
-    /**
-     * Export this tag to the given DocBlock.
-     *
-     * This method also invokes the 'reflection.docblock.tag.export' which can
-     * be used to augment the data. This is useful for plugins so that they
-     * can provide custom tags.
-     *
-     * @param \DOMElement   $parent  Element to augment.
-     * @param Tag           $tag     The tag to export.
-     * @param BaseReflector $element Element to log from.
-     *
-     * @return void
-     */
-    public function buildDocBlockTag(\DOMElement $parent, $tag, $element)
-    {
-        if (!$tag) {
-            // TODO #840: Workaround; for some reason there are NULLs in the tags array.
-            return;
-        }
-        $child = new \DOMElement('tag');
-        $parent->appendChild($child);
-
-        $child->setAttribute('name', $tag->getName());
-        $child->setAttribute('line', $parent->getAttribute('line'));
-        
-        $description = '';
-        //@version, @deprecated, @since
-        if (method_exists($tag, 'getVersion')) {
-            $description .= $tag->getVersion() . ' ';
-        }
-        //TODO: Other previously unsupported tags are to be "serialized" here.
-        $description .= $tag->getDescription();
-        
-        $child->setAttribute(
-            'description',
-            str_replace('&', '&amp;', trim($description))
-        );
-
-        if (method_exists($tag, 'getTypes')) {
-            $typeString = '';
-            foreach ($tag->getTypes() as $type) {
-                $typeString .= $type . '|';
-                $typeNode = $child->appendChild(new \DOMElement('type', $type));
-                $lastSlashPos = strrpos($type, '\\');
-                if (false !== $lastSlashPos) {
-                    $typeNode->setAttribute(
-                        'link',
-                        substr($type, $lastSlashPos + 1) . '.html'
-                    );
-                }
-            }
-            $child->setAttribute('type', rtrim($typeString, '|'));
-        }
-        if (method_exists($tag, 'getVariableName')) {
-            $child->setAttribute(
-                'variable',
-                str_replace('&', '&amp;', $tag->getVariableName())
-            );
-        }
-        if (method_exists($tag, 'getReference')) {
-            $child->setAttribute(
-                'link',
-                str_replace('&', '&amp;', $tag->getReference())
-            );
-        }
-        if (method_exists($tag, 'getLink')) {
-            $child->setAttribute(
-                'link',
-                str_replace('&', '&amp;', $tag->getLink())
-            );
-        }
-    }
-
-    /**
-     * Adds the short description of $docblock to the given node as description
-     * field.
-     *
-     * @param \DOMElement        $node
-     * @param DescriptorAbstract $element
-     *
-     * @return void
-     */
-    protected function addDescription(\DOMElement $node, DescriptorAbstract $element)
-    {
-        $node->appendChild(new \DOMElement('description'))
-            ->appendChild(new \DOMText($element->getSummary()));
-    }
-
-    /**
-     * Adds the DocBlock's long description to the $child element,
-     *
-     * @param \DOMElement        $child
-     * @param DescriptorAbstract $element
-     *
-     * @return void
-     */
-    protected function addLongDescription(\DOMElement $child, DescriptorAbstract $element)
-    {
-        $child
-            ->appendChild(new \DOMElement('long-description'))
-            ->appendChild(new \DOMText($element->getDescription()));
-    }
-
-    /**
-     * Adds each tag to the $xml_node.
-     *
-     * @param \DOMElement        $xml_node
-     * @param DescriptorAbstract $element
-     *
-     * @return void
-     */
-    protected function addTags(\DOMElement $xml_node, $element)
-    {
-        foreach ($element->getTags() as $tagGroup) {
-            if ($tagGroup === null) {
-                continue;
-            }
-
-            foreach ($tagGroup as $tag) {
-                $this->buildDocBlockTag($xml_node, $tag, $element);
+        foreach ($class->getInheritedMethods() as $method) {
+            // TODO #840: Workaround; for some reason there are NULLs in the methods array.
+            if ($method) {
+                $this->methodConverter->convert($child, $method);
             }
         }
     }
@@ -738,6 +411,8 @@ class Xml extends WriterAbstract implements Translatable
      * - Marker list
      * - Deprecated elements listing
      * - Removal of objects related to visibility
+     *
+     * @param ProjectDescriptor $projectDescriptor
      *
      * @return void
      */

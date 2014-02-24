@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -40,8 +40,8 @@ class ParamTag
             // other than word characters, whitespaces and punctuation characters.
             // This is because Markdown is a huge performance hit on the system
             if (!preg_match('/^[\w|\s|\.|,|;|\:|\&|\#]+$/', $node->nodeValue)) {
-                $md = new \dflydev\markdown\MarkdownExtraParser();
-                $node->nodeValue =  $md->transformMarkdown($node->nodeValue);
+                $md = \Parsedown::instance();
+                $node->nodeValue =  $md->parse($node->nodeValue);
             } else {
                 // markdown will always surround the element with a paragraph;
                 // we do the same here to make it consistent

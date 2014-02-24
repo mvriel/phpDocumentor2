@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -23,6 +23,7 @@ use phpDocumentor\Descriptor\Builder\Reflector\InterfaceAssembler;
 use phpDocumentor\Descriptor\Builder\Reflector\MethodAssembler;
 use phpDocumentor\Descriptor\Builder\Reflector\PropertyAssembler;
 use phpDocumentor\Descriptor\Builder\Reflector\Tags\AuthorAssembler;
+use phpDocumentor\Descriptor\Builder\Reflector\Tags\DeprecatedAssembler;
 use phpDocumentor\Descriptor\Builder\Reflector\Tags\GenericTagAssembler;
 use phpDocumentor\Descriptor\Builder\Reflector\Tags\LinkAssembler;
 use phpDocumentor\Descriptor\Builder\Reflector\Tags\MethodAssembler as MethodTagAssembler;
@@ -40,12 +41,12 @@ use phpDocumentor\Descriptor\Filter\ClassFactory;
 use phpDocumentor\Descriptor\Filter\Filter;
 use phpDocumentor\Descriptor\Filter\StripIgnore;
 use phpDocumentor\Descriptor\Filter\StripInternal;
-use phpDocumentor\Descriptor\ProjectAnalyzer;
 use phpDocumentor\Plugin\Core\Descriptor\Validator\Constraints as phpDocAssert;
 use phpDocumentor\Reflection\ClassReflector\ConstantReflector as ClassConstant;
 use phpDocumentor\Reflection\ClassReflector;
 use phpDocumentor\Reflection\ConstantReflector;
 use phpDocumentor\Reflection\DocBlock\Tag\AuthorTag;
+use phpDocumentor\Reflection\DocBlock\Tag\DeprecatedTag;
 use phpDocumentor\Reflection\DocBlock\Tag\LinkTag;
 use phpDocumentor\Reflection\DocBlock\Tag\MethodTag;
 use phpDocumentor\Reflection\DocBlock\Tag\ParamTag;
@@ -104,19 +105,21 @@ class ServiceProvider implements ServiceProviderInterface
      */
     public function attachAssemblersToFactory(AssemblerFactory $factory)
     {
-        $fileMatcher      = function ($criteria) {return $criteria instanceof FileReflector; };
+        // @codingStandardsIgnoreStart because we limit the verbosity by making all closures single-line
+        $fileMatcher      = function ($criteria) { return $criteria instanceof FileReflector; };
         $constantMatcher  = function ($criteria) {
             return $criteria instanceof ConstantReflector || $criteria instanceof ClassConstant;
         };
+        $traitMatcher     = function ($criteria) { return $criteria instanceof TraitReflector; };
         $classMatcher     = function ($criteria) { return $criteria instanceof ClassReflector; };
         $interfaceMatcher = function ($criteria) { return $criteria instanceof InterfaceReflector; };
-        $traitMatcher     = function ($criteria) { return $criteria instanceof TraitReflector; };
         $propertyMatcher  = function ($criteria) { return $criteria instanceof ClassReflector\PropertyReflector; };
         $methodMatcher    = function ($criteria) { return $criteria instanceof ClassReflector\MethodReflector; };
         $argumentMatcher  = function ($criteria) { return $criteria instanceof FunctionReflector\ArgumentReflector; };
         $functionMatcher  = function ($criteria) { return $criteria instanceof FunctionReflector; };
 
         $authorMatcher      = function ($criteria) { return $criteria instanceof AuthorTag; };
+        $deprecatedMatcher  = function ($criteria) { return $criteria instanceof DeprecatedTag; };
         $linkMatcher        = function ($criteria) { return $criteria instanceof LinkTag; };
         $methodTagMatcher   = function ($criteria) { return $criteria instanceof MethodTag; };
         $propertyTagMatcher = function ($criteria) { return $criteria instanceof PropertyTag; };
@@ -130,18 +133,20 @@ class ServiceProvider implements ServiceProviderInterface
         $versionMatcher     = function ($criteria) { return $criteria instanceof Tag\VersionTag; };
 
         $tagFallbackMatcher = function ($criteria) { return $criteria instanceof Tag; };
+        // @codingStandardsIgnoreEnd
 
         $factory->register($fileMatcher, new FileAssembler());
         $factory->register($constantMatcher, new ConstantAssembler());
+        $factory->register($traitMatcher, new TraitAssembler());
         $factory->register($classMatcher, new ClassAssembler());
         $factory->register($interfaceMatcher, new InterfaceAssembler());
-        $factory->register($traitMatcher, new TraitAssembler());
         $factory->register($propertyMatcher, new PropertyAssembler());
         $factory->register($methodMatcher, new MethodAssembler());
         $factory->register($argumentMatcher, new ArgumentAssembler());
         $factory->register($functionMatcher, new FunctionAssembler());
 
         $factory->register($authorMatcher, new AuthorAssembler());
+        $factory->register($deprecatedMatcher, new DeprecatedAssembler());
         $factory->register($linkMatcher, new LinkAssembler());
         $factory->register($methodTagMatcher, new MethodTagAssembler());
         $factory->register($propertyTagMatcher, new PropertyTagAssembler());
@@ -197,8 +202,7 @@ class ServiceProvider implements ServiceProviderInterface
     {
         /** @var ClassMetadata $fileMetadata */
         $fileMetadata  = $validator->getMetadataFor('phpDocumentor\Descriptor\FileDescriptor');
-        /** @var ClassMetadata $constantMetadata */
-        $constantMetadata  = $validator->getMetadataFor('phpDocumentor\Descriptor\ConstantDescriptor');
+        $validator->getMetadataFor('phpDocumentor\Descriptor\ConstantDescriptor');
         /** @var ClassMetadata $functionMetadata */
         $functionMetadata  = $validator->getMetadataFor('phpDocumentor\Descriptor\FunctionDescriptor');
         /** @var ClassMetadata $classMetadata */
@@ -222,6 +226,12 @@ class ServiceProvider implements ServiceProviderInterface
 
         $functionMetadata->addConstraint(new phpDocAssert\Functions\IsReturnTypeNotAnIdeDefault());
         $methodMetadata->addConstraint(new phpDocAssert\Functions\IsReturnTypeNotAnIdeDefault());
+
+        $functionMetadata->addConstraint(new phpDocAssert\Functions\IsParamTypeNotAnIdeDefault());
+        $methodMetadata->addConstraint(new phpDocAssert\Functions\IsParamTypeNotAnIdeDefault());
+
+        $functionMetadata->addConstraint(new phpDocAssert\Functions\IsArgumentInDocBlock());
+        $methodMetadata->addConstraint(new phpDocAssert\Functions\IsArgumentInDocBlock());
 
         $classMetadata->addConstraint(new phpDocAssert\Classes\HasSinglePackage());
         $interfaceMetadata->addConstraint(new phpDocAssert\Classes\HasSinglePackage());

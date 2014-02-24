@@ -6,10 +6,8 @@ class phpdocumentor::setup {
     include php
     include apache
     php::module { "xsl": }
-    php::module { "mongo": }
     php::module { "intl": }
     php::module { "xdebug": }
-    php::module { "xhprof": }
 
     class { 'composer':
       command_name => 'composer',

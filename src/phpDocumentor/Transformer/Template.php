@@ -4,7 +4,7 @@
  *
  * PHP Version 5.3
  *
- * @copyright 2010-2013 Mike van Riel / Naenius (http://www.naenius.com)
+ * @copyright 2010-2014 Mike van Riel / Naenius (http://www.naenius.com)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT
  * @link      http://phpdoc.org
  */
@@ -59,9 +59,9 @@ class Template implements \ArrayAccess, \Countable, \Iterator
     protected $transformations = array();
 
     /**
-     * @Serializer\XmlKeyValuePairs
-     * @Serializer\Type("array")
-     * @var string[]
+     * @Serializer\XmlList(entry = "parameter")
+     * @Serializer\Type("array<phpDocumentor\Transformer\Template\Parameter>")
+     * @var Parameter[]
      */
     protected $parameters = array();
 
@@ -321,13 +321,21 @@ class Template implements \ArrayAccess, \Countable, \Iterator
     /**
      * Returns the parameters associated with this template.
      *
-     * @return \phpDocumentor\Transformer\Template\Parameter[]
+     * @return Parameter[]
      */
     public function getParameters()
     {
         return $this->parameters;
     }
 
+    /**
+     * Sets a new parameter in the collection.
+     *
+     * @param string|integer $key
+     * @param Parameter      $value
+     *
+     * @return void
+     */
     public function setParameter($key, $value)
     {
         $this->parameters[$key] = $value;
