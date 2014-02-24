@@ -1,5 +1,5 @@
 <?php
-namespace phpDocumentor\Search\Engine\Configuration;
+namespace phpDocumentor\Plugin\Search\Engine\Configuration;
 
 class LunrJs
 {

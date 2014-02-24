@@ -1,5 +1,5 @@
 <?php
-namespace phpDocumentor\Search;
+namespace phpDocumentor\Plugin\Search;
 
 class Document extends \ArrayObject
 {

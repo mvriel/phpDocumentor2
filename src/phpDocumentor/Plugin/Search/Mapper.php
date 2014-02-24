@@ -1,6 +1,6 @@
 <?php
 
-namespace phpDocumentor\Search;
+namespace phpDocumentor\Plugin\Search;
 
 /**
  * The mapper is used to convert an object to a Document for indexing.

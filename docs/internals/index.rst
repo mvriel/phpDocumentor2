@@ -7,3 +7,4 @@ Internals
    tags
    versioning
    build-and-release-process
+   search

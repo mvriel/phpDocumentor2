@@ -1,5 +1,7 @@
 <?php
-namespace phpDocumentor\Search\Engine\Configuration;
+namespace phpDocumentor\Plugin\Search\Engine\Configuration;
+
+use Guzzle\Http\Client;
 
 class ElasticSearch
 {
@@ -8,7 +10,7 @@ class ElasticSearch
     protected $index = 'documentation';
     protected $type  = 'api';
 
-    public function __construct(\Guzzle\Http\Client $http_client, $uri = 'http://localhost:9200')
+    public function __construct(Client $http_client, $uri = 'http://localhost:9200')
     {
         $this->setHttpClient($http_client);
         $this->setUri($uri);
@@ -44,13 +46,13 @@ class ElasticSearch
         return $this->uri;
     }
 
-    public function setHttpClient(\Guzzle\Http\Client $http_client)
+    public function setHttpClient(Client $http_client)
     {
         $this->http_client = $http_client;
     }
 
     /**
-     * @return \Guzzle\Http\Client
+     * @return Client
      */
     public function getHttpClient()
     {

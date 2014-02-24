@@ -9,7 +9,11 @@
  * @link      http://phpdoc.org
  */
 
-namespace phpDocumentor\Search\Engine;
+namespace phpDocumentor\Plugin\Search\Tests;
+
+use phpDocumentor\Plugin\Search\Document;
+use phpDocumentor\Plugin\Search\Engine\ElasticSearch;
+use phpDocumentor\Plugin\Search\Engine\Configuration\ElasticSearch as ElasticSearchConfiguration;
 
 /**
  * Tests the Document class for the ElasticSearch Engine.
@@ -23,7 +27,7 @@ class ElasticSearchTest extends \PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        $configuration = new Configuration\ElasticSearch(new \Guzzle\Http\Client(), 'http://localhost:9200');
+        $configuration = new ElasticSearchConfiguration(new \Guzzle\Http\Client(), 'http://localhost:9200');
         $this->fixture = new ElasticSearch($configuration);
     }
 
@@ -34,7 +38,7 @@ class ElasticSearchTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertAttributeEmpty('updates', $this->fixture);
 
-        $this->fixture->persist(new \phpDocumentor\Search\Document());
+        $this->fixture->persist(new Document());
 
         $this->assertAttributeCount(1, 'updates', $this->fixture);
     }
@@ -46,19 +50,18 @@ class ElasticSearchTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertAttributeEmpty('removals', $this->fixture);
 
-        $this->fixture->remove(new \phpDocumentor\Search\Document());
+        $this->fixture->remove(new Document());
 
         $this->assertAttributeCount(1, 'removals', $this->fixture);
     }
 
     public function testFlush()
     {
-        $document = new \phpDocumentor\Search\Document();
+        $document = new Document();
         $document->setId('1');
         $document['test'] = 'my_test';
 
         $this->fixture->persist($document);
         $this->fixture->flush();
     }
-
 }

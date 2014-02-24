@@ -1,5 +1,5 @@
 <?php
-namespace phpDocumentor\Search\Engine;
+namespace phpDocumentor\Plugin\Search\Engine;
 
 class PersistException extends \RuntimeException
 {

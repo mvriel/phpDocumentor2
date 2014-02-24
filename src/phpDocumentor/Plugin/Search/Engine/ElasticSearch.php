@@ -1,8 +1,7 @@
 <?php
-namespace phpDocumentor\Search\Engine;
+namespace phpDocumentor\Plugin\Search\Engine;
 
-use phpDocumentor\Search\Document;
-use Guzzle\Http\Client;
+use phpDocumentor\Plugin\Search\Document;
 
 class ElasticSearch implements EngineInterface
 {

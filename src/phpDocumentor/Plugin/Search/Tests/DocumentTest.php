@@ -9,7 +9,9 @@
  * @link      http://phpdoc.org
  */
 
-namespace phpDocumentor\Search;
+namespace phpDocumentor\Plugin\Search\Tests;
+
+use phpDocumentor\Plugin\Search\Document;
 
 /**
  * Tests the Document class for the Search Engine.

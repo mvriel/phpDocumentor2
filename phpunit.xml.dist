@@ -4,6 +4,7 @@
     <testsuites>
         <testsuite name="phpDocumentor">
             <directory>./tests/unit/</directory>
+            <directory>./src/phpDocumentor/Plugin/*/Tests</directory>
         </testsuite>
     </testsuites>
     <filter>

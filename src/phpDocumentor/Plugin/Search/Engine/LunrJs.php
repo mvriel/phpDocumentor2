@@ -1,8 +1,7 @@
 <?php
-namespace phpDocumentor\Search\Engine;
+namespace phpDocumentor\Plugin\Search\Engine;
 
-use Guzzle\Http\Client;
-use phpDocumentor\Search\Document;
+use phpDocumentor\Plugin\Search\Document;
 
 /**
  * Engine implementation for the lunr.js Javascript Full Text Search,

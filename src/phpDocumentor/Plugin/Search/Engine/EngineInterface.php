@@ -1,7 +1,7 @@
 <?php
-namespace phpDocumentor\Search\Engine;
+namespace phpDocumentor\Plugin\Search\Engine;
 
-use phpDocumentor\Search\Document;
+use phpDocumentor\Plugin\Search\Document;
 
 interface EngineInterface
 {
