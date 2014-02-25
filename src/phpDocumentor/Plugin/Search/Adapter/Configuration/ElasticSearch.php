@@ -1,5 +1,5 @@
 <?php
-namespace phpDocumentor\Plugin\Search\Engine\Configuration;
+namespace phpDocumentor\Plugin\Search\Adapter\Configuration;
 
 use Guzzle\Http\Client;
 

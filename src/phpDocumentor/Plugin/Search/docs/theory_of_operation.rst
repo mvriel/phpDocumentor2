@@ -18,7 +18,7 @@ and that the Consumer is able to query that Search Engine using the Frontend.
        'field1' => 'value'
    ));
 
-   $search_engine = new Search\Engine(new Search\Engine\ElasticSearch());
+   $search_engine = new \phpDocumentor\Plugin\Search\EngineManager(new Search\Adapter\ElasticSearch());
    $search_engine->persist($document);
    $search_engine->flush();
 

@@ -1,5 +1,5 @@
 <?php
-namespace phpDocumentor\Plugin\Search\Engine;
+namespace phpDocumentor\Plugin\Search\Adapter;
 
 use phpDocumentor\Plugin\Search\Document;
 
@@ -12,11 +12,11 @@ use phpDocumentor\Plugin\Search\Document;
  *
  * The downside of the latter is that it costs a lot more bandwidth and performance, so for medium-sized
  * projects is recommended to install node or use any of the other Search Engines.
- * For large projects it is not recommended to use this Search Engine as it will cost too much performance.
+ * For large projects it is NOT recommended to use this Search Engine as it will cost too much performance.
  *
  * @link http://lunrjs.com
  */
-class LunrJs implements EngineInterface
+class LunrJs implements AdapterInterface
 {
     /** @var Configuration\LunrJs */
     protected $configuration;
@@ -24,11 +24,31 @@ class LunrJs implements EngineInterface
     /** @var Document[] $updates */
     protected $updates = array();
 
+    /**
+     * Registers the configuration with this Search Engine.
+     *
+     * @param Configuration\LunrJs $configuration
+     */
     public function __construct(Configuration\LunrJs $configuration)
     {
-        $this->setConfiguration($configuration);
+        $this->configuration = $configuration;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @return Configuration\LunrJs
+     */
+    public function getConfiguration()
+    {
+        return $this->configuration;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @todo add support for querying the Lunr.js index using Node or Execjs.
+     */
     public function find($expression, $start = 0, $limit = 10)
     {
         throw new \RuntimeException(
@@ -36,23 +56,25 @@ class LunrJs implements EngineInterface
         );
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function persist(Document $document)
     {
         $this->updates[$document->getId()] = $document;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function remove(Document $document)
     {
-        throw new \RuntimeException(
-            'The LunrJs Search Engine does not support removing documents because the index is rebuilt from scratch'
-            . ' everytime'
-        );
+        // The LunrJs Search Engine does not support removing documents because the index is rebuilt from
+        // scratch everytime
     }
 
     /**
-     * Writes the stored documents to an index file.
-     *
-     * @return void
+     * {@inheritDoc}
      */
     public function flush()
     {
@@ -75,22 +97,16 @@ class LunrJs implements EngineInterface
             $index .= $indexName . '.add(' . json_encode($values) . ');';
         }
 
-        file_put_contents($this->getConfiguration()->getPath() . DIRECTORY_SEPARATOR . 'index.lunr.js', $index);
+        file_put_contents($this->getIndexPath(), $index);
     }
 
     /**
-     * @param Configuration\LunrJs $configuration
+     * Returns the location of the index file.
+     *
+     * @return string
      */
-    public function setConfiguration(Configuration\LunrJs $configuration)
+    protected function getIndexPath()
     {
-        $this->configuration = $configuration;
-    }
-
-    /**
-     * @return Configuration\LunrJs
-     */
-    public function getConfiguration()
-    {
-        return $this->configuration;
+        return $this->getConfiguration()->getPath() . DIRECTORY_SEPARATOR . 'index.lunr.js';
     }
 }

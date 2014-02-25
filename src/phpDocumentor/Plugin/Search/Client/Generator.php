@@ -1,7 +1,7 @@
 <?php
 namespace phpDocumentor\Search\Client;
 
-use \phpDocumentor\Search\Engine\EngineInterface;
+use \phpDocumentor\Plugin\Search\Adapter\AdapterInterface;
 
 class Generator
 {
@@ -13,7 +13,7 @@ class Generator
         $this->twig = $twig;
     }
 
-    public function generate(EngineInterface $engine)
+    public function generate(AdapterInterface $engine)
     {
         $class_name_parts = explode('\\', get_class($engine));
         $engine_type = $class_name_parts[count($class_name_parts)-1];

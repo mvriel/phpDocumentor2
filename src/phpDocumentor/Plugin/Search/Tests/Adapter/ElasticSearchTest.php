@@ -12,13 +12,13 @@
 namespace phpDocumentor\Plugin\Search\Tests;
 
 use phpDocumentor\Plugin\Search\Document;
-use phpDocumentor\Plugin\Search\Engine\ElasticSearch;
-use phpDocumentor\Plugin\Search\Engine\Configuration\ElasticSearch as ElasticSearchConfiguration;
+use phpDocumentor\Plugin\Search\Adapter\ElasticSearch;
+use phpDocumentor\Plugin\Search\Adapter\Configuration\ElasticSearch as ElasticSearchConfiguration;
 
 /**
  * Tests the Document class for the ElasticSearch Engine.
  *
- * @covers \phpDocumentor\Search\Engine\ElasticSearch
+ * @covers \phpDocumentor\Search\Adapter\ElasticSearch
  */
 class ElasticSearchTest extends \PHPUnit_Framework_TestCase
 {
@@ -32,7 +32,7 @@ class ElasticSearchTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers \phpDocumentor\Search\Engine\ElasticSearch::persist
+     * @covers \phpDocumentor\Search\Adapter\ElasticSearch::persist
      */
     public function testPersist()
     {
@@ -44,7 +44,7 @@ class ElasticSearchTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers \phpDocumentor\Search\Engine\ElasticSearch::remove
+     * @covers \phpDocumentor\Search\Adapter\ElasticSearch::remove
      */
     public function testRemove()
     {

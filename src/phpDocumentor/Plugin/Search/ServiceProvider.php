@@ -13,7 +13,8 @@ namespace phpDocumentor\Plugin\Search;
 
 use Cilex\Application;
 use Cilex\ServiceProviderInterface;
-use phpDocumentor\Translator;
+use Guzzle\Http\Client;
+use phpDocumentor\Plugin\Search\Writer\Search;
 use phpDocumentor\Plugin\Core\Transformer\Writer;
 use phpDocumentor\Transformer\Writer\Collection;
 
@@ -27,8 +28,57 @@ class ServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
         /** @var Collection $writerCollection */
-        $writerCollection = $app['transformer.writer.collection'];
+        $app->extend(
+            'transformer.writer.collection',
+            function ($app) {
+                $writerCollection = $app['transformer.writer.collection'];
+                $writerCollection['Search'] = new Search();
+            }
+        );
 
-//        $writerCollection['Search']     = new Writer\Search();
+        $this->addLunrJsEngineAndSettings($app);
+        $this->addElasticSearchEngineAndSettings($app);
+    }
+
+    /**
+     * Adds the services and settings for the LunrJs Engine.
+     *
+     * @param Application $app
+     *
+     * @return void
+     */
+    protected function addLunrJsEngineAndSettings(Application $app)
+    {
+        $app['search.engine.lunrjs.schema'] = array();
+        $app['search.engine.lunrjs.path'] = '';
+        $app['search.engine.lunrjs'] = $app->share(
+            function ($app) {
+                new Engine\LunrJs(
+                    new Engine\Configuration\LunrJs(
+                        $app['search.engine.lunrjs.schema'],
+                        $app['search.engine.lunrjs.path']
+                    )
+                );
+            }
+        );
+    }
+
+    /**
+     * Adds the services and settings for the ElasticSearch Engine.
+     *
+     * @param Application $app
+     *
+     * @return void
+     */
+    protected function addElasticSearchEngineAndSettings(Application $app)
+    {
+        $app['search.engine.elasticsearch.uri'] = 'http://localhost:9200';
+        $app['search.engine.elasticsearch'] = $app->share(
+            function ($app) {
+                new Engine\Elasticsearch(
+                    new Engine\Configuration\Elasticsearch(new Client(), $app['search.engine.elasticsearch.uri'])
+                );
+            }
+        );
     }
 }

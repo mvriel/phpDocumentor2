@@ -1,25 +1,48 @@
 <?php
-namespace phpDocumentor\Plugin\Search\Engine;
+namespace phpDocumentor\Plugin\Search\Adapter;
 
 use phpDocumentor\Plugin\Search\Document;
 
-class ElasticSearch implements EngineInterface
+class ElasticSearch implements AdapterInterface
 {
+    /** @var Document[] Documents that are ready to be purged from the Search Engine */
     protected $removals = array();
+
+    /** @var Document[] Documents that are ready to be added or updated in the Search Engine */
     protected $updates  = array();
 
-    /** @var Configuration\ElasticSearch */
+    /** @var Configuration\ElasticSearch The configuration specific for this Search Engine */
     protected $configuration;
 
+    /**
+     * Registers the configuration with this Search Engine.
+     *
+     * @param Configuration\ElasticSearch $configuration
+     */
     public function __construct(Configuration\ElasticSearch $configuration)
     {
-        $this->setConfiguration($configuration);
+        $this->configuration = $configuration;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function getConfiguration()
+    {
+        return $this->configuration;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function find($expression, $start = 0, $limit = 10)
     {
         $client = $this->getConfiguration()->getHttpClient();
         $result = $client->get($this->getBaseUrl() . '/_search?q=' . $expression);
+
+        if (!isset($result->hits->hits)) {
+            throw new \RuntimeException('An error occurred during the finding of documents');
+        }
 
         $results = array();
         foreach ($result->hits->hits as $hit) {
@@ -31,11 +54,17 @@ class ElasticSearch implements EngineInterface
         return $results;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function persist(Document $document)
     {
         $this->updates[$document->getId()] = $document;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function remove(Document $document)
     {
         if (isset($this->updates[$document->getId()])) {
@@ -45,6 +74,9 @@ class ElasticSearch implements EngineInterface
         $this->removals[$document->getId()] = $document;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function flush()
     {
         $client = $this->getConfiguration()->getHttpClient();
@@ -75,6 +107,11 @@ class ElasticSearch implements EngineInterface
         }
     }
 
+    /**
+     * Assembles the Base Url (storage path) where the documents are stored in Elastic Search.
+     *
+     * @return string
+     */
     protected function getBaseUrl()
     {
         return implode(
@@ -87,24 +124,15 @@ class ElasticSearch implements EngineInterface
         );
     }
 
+    /**
+     * Converts the document contents, except id, to a representation that can be sent to ElasticSearch.
+     *
+     * @param Document $document
+     *
+     * @return string A JSON string containing all fields and their values of a Document.
+     */
     protected function convert(Document $document)
     {
         return json_encode($document->getArrayCopy());
-    }
-
-    /**
-     * @param Configuration\ElasticSearch $configuration
-     */
-    public function setConfiguration(Configuration\ElasticSearch $configuration)
-    {
-        $this->configuration = $configuration;
-    }
-
-    /**
-     * @return \phpDocumentor\Search\Engine\Configuration\ElasticSearch
-     */
-    public function getConfiguration()
-    {
-        return $this->configuration;
     }
 }

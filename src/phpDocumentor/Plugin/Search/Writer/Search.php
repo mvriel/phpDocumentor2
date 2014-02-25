@@ -9,9 +9,25 @@
  * @link      http://phpdoc.org
  */
 
-namespace phpDocumentor\Search\Writer;
+namespace phpDocumentor\Plugin\Search\Writer;
 
-class Search
+use phpDocumentor\Descriptor\ProjectDescriptor;
+use phpDocumentor\Transformer\Transformation;
+use phpDocumentor\Transformer\Writer\WriterAbstract;
+
+class Search extends WriterAbstract
 {
+    /**
+     * Abstract definition of the transformation method.
+     *
+     * @param ProjectDescriptor $project Document containing the structure.
+     * @param Transformation $transformation Transformation to execute.
+     *
+     * @return void
+     */
+    public function transform(ProjectDescriptor $project, Transformation $transformation)
+    {
+        // TODO: Implement transform() method.
+    }
 
 }
