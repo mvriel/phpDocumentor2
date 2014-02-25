@@ -18,6 +18,11 @@ use phpDocumentor\Plugin\Search\Document;
  */
 class LunrJs implements AdapterInterface
 {
+    const INDEX_FILENAME = 'index.lunr.js';
+
+    /** @var string the name of the index */
+    protected $indexName = 'lunrIndex';
+
     /** @var Configuration\LunrJs */
     protected $configuration;
 
@@ -66,6 +71,8 @@ class LunrJs implements AdapterInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @codeCoverageIgnore because this method does nothing
      */
     public function remove(Document $document)
     {
@@ -78,23 +85,10 @@ class LunrJs implements AdapterInterface
      */
     public function flush()
     {
-        $indexName = 'lunrIndex';
+        $index = $this->generateEngineInstantiation();
 
-        // initialize the search engine and define the schema
-        $index = 'var ' . $indexName . ' = lunr(function() {';
-        $index .= 'this.ref("id");';
-        foreach ($this->getConfiguration()->getSchema() as $field) {
-            $index .= 'this.field("' . $field['name'] . '");';
-        }
-        $index .= '});';
-
-        // populate the index
         foreach ($this->updates as $document) {
-            $values = array('id' => $document->getId());
-            foreach ($this->getConfiguration()->getSchema() as $field) {
-                $values[$field['name']] = $document[$field['name']];
-            }
-            $index .= $indexName . '.add(' . json_encode($values) . ');';
+            $index .= $this->convert($document);
         }
 
         file_put_contents($this->getIndexPath(), $index);
@@ -107,6 +101,50 @@ class LunrJs implements AdapterInterface
      */
     protected function getIndexPath()
     {
-        return $this->getConfiguration()->getPath() . DIRECTORY_SEPARATOR . 'index.lunr.js';
+        return $this->getConfiguration()->getPath() . DIRECTORY_SEPARATOR . self::INDEX_FILENAME;
+    }
+
+    /**
+     * Initialize the search engine and define the schema.
+     *
+     * @return string
+     */
+    protected function generateEngineInstantiation()
+    {
+        $index = 'var ' . $this->indexName . ' = lunr(function() {';
+        $index .= 'this.ref("id");';
+        $index .= $this->generateSchema();
+        $index .= '});';
+
+        return $index;
+    }
+
+    /**
+     * @return string
+     */
+    protected function generateSchema()
+    {
+        $schema = '';
+        foreach ($this->getConfiguration()->getSchema() as $field) {
+            $schema .= 'this.field("' . $field['name'] . '");';
+        }
+        return $schema;
+    }
+
+    /**
+     * Converts the document contents, including id, to a Javascript command that adds it to the Lunr index.
+     *
+     * @param Document $document
+     *
+     * @return string A javascript command adding the document to the index.
+     */
+    protected function convert($document)
+    {
+        $values = array('id' => $document->getId());
+        foreach ($this->getConfiguration()->getSchema() as $field) {
+            $values[$field['name']] = $document[$field['name']];
+        }
+
+        return $this->indexName . '.add(' . json_encode($values) . ');';
     }
 }
