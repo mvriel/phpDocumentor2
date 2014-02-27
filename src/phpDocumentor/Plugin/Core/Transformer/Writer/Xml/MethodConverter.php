@@ -12,6 +12,7 @@
 namespace phpDocumentor\Plugin\Core\Transformer\Writer\Xml;
 
 use phpDocumentor\Descriptor\MethodDescriptor;
+use phpDocumentor\Descriptor\NamespaceDescriptor;
 
 /**
  * Converter used to create an XML Element representing the method, its arguments and its DocBlock.
@@ -49,7 +50,7 @@ class MethodConverter
      */
     public function convert(\DOMElement $parent, MethodDescriptor $method)
     {
-        $fullyQualifiedNamespaceName = $method->getNamespace()
+        $fullyQualifiedNamespaceName = $method->getNamespace() instanceof NamespaceDescriptor
             ? $method->getNamespace()->getFullyQualifiedStructuralElementName()
             : $parent->getAttribute('namespace');
 
