@@ -16,13 +16,13 @@ use phpDocumentor\Plugin\Search\Document;
 /**
  * Tests the Document class for the Search Engine.
  *
- * @covers \phpDocumentor\Search\Document
+ * @covers \phpDocumentor\Plugin\Search\Document
  */
 class DocumentTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @covers \phpDocumentor\Search\Document::getId
-     * @covers \phpDocumentor\Search\Document::setId
+     * @covers \phpDocumentor\Plugin\Search\Document::getId
+     * @covers \phpDocumentor\Plugin\Search\Document::setId
      */
     public function testId()
     {

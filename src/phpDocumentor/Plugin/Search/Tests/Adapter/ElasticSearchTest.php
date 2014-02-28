@@ -18,7 +18,7 @@ use phpDocumentor\Plugin\Search\Adapter\Configuration\ElasticSearch as ElasticSe
 /**
  * Tests the Document class for the ElasticSearch Engine.
  *
- * @covers \phpDocumentor\Search\Adapter\ElasticSearch
+ * @covers \phpDocumentor\Plugin\Search\Adapter\ElasticSearch
  */
 class ElasticSearchTest extends \PHPUnit_Framework_TestCase
 {
@@ -32,7 +32,7 @@ class ElasticSearchTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers \phpDocumentor\Search\Adapter\ElasticSearch::persist
+     * @covers \phpDocumentor\Plugin\Search\Adapter\ElasticSearch::persist
      */
     public function testPersist()
     {
@@ -44,7 +44,7 @@ class ElasticSearchTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers \phpDocumentor\Search\Adapter\ElasticSearch::remove
+     * @covers \phpDocumentor\Plugin\Search\Adapter\ElasticSearch::remove
      */
     public function testRemove()
     {

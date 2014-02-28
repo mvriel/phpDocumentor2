@@ -10,21 +10,22 @@
  */
 
 namespace phpDocumentor\Plugin\Search\Tests;
+
 use phpDocumentor\Plugin\Search\Document;
 use phpDocumentor\Plugin\Search\Mapper;
 
 /**
  * Tests the Mapper class for the Search Engine.
  *
- * @covers \phpDocumentor\Search\Mapper
+ * @covers \phpDocumentor\Plugin\Search\Mapper
  */
 class MapperTest extends \PHPUnit_Framework_TestCase
 {
     protected $definition = array('id' => 'data.id');
 
     /**
-     * @covers \phpDocumentor\Search\Mapper::__construct
-     * @covers \phpDocumentor\Search\Mapper::setDefinition
+     * @covers \phpDocumentor\Plugin\Search\Mapper::__construct
+     * @covers \phpDocumentor\Plugin\Search\Mapper::setDefinition
      */
     public function testInitializationWithDefinition()
     {
@@ -33,8 +34,8 @@ class MapperTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers \phpDocumentor\Search\Mapper::getTwigEnvironment
-     * @covers \phpDocumentor\Search\Mapper::setTwigEnvironment
+     * @covers \phpDocumentor\Plugin\Search\Mapper::getTwigEnvironment
+     * @covers \phpDocumentor\Plugin\Search\Mapper::setTwigEnvironment
      */
     public function testTwigEnvironment()
     {
