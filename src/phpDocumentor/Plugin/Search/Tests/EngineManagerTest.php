@@ -35,11 +35,12 @@ class EngineManagerTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @covers phpDocumentor\Plugin\Search\EngineManager::__construct
+     * @covers phpDocumentor\Plugin\Search\EngineManager::getAdapter
      */
     public function testAdapterIsStoredOnInstantiation()
     {
         // Assert
-        $this->assertAttributeSame($this->adapterMock, 'adapter', $this->fixture);
+        $this->assertSame($this->adapterMock, $this->fixture->getAdapter());
     }
 
     /**

@@ -31,6 +31,16 @@ class EngineManager implements AdapterInterface
     }
 
     /**
+     * Returns the adapter that this manager uses.
+     *
+     * @return AdapterInterface
+     */
+    public function getAdapter()
+    {
+        return $this->adapter;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function find($expression, $start = 0, $limit = 10)
