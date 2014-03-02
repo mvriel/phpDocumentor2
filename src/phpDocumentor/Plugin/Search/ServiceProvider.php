@@ -14,6 +14,8 @@ namespace phpDocumentor\Plugin\Search;
 use Cilex\Application;
 use Cilex\ServiceProviderInterface;
 use Guzzle\Http\Client;
+use phpDocumentor\Plugin\Search\Adapter\AdapterInterface;
+use phpDocumentor\Plugin\Search\Client\Generator;
 use phpDocumentor\Plugin\Search\Writer\Search;
 use phpDocumentor\Plugin\Core\Transformer\Writer;
 use phpDocumentor\Transformer\Writer\Collection;
@@ -27,21 +29,18 @@ class ServiceProvider implements ServiceProviderInterface
      */
     public function register(Application $app)
     {
-        /** @var Collection $writerCollection */
-        $app->extend(
-            'transformer.writer.collection',
-            function ($app) {
-                $writerCollection = $app['transformer.writer.collection'];
-                $writerCollection['Search'] = new Search();
-            }
-        );
+        // generic configuration options
+        $app['search.adapter'] = 'lunrjs';
 
         $this->addLunrJsEngineAndSettings($app);
         $this->addElasticSearchEngineAndSettings($app);
+        $this->addEngineManager($app);
+        $this->addClientGenerator($app);
+        $this->appendSearchWriterToWriterCollection($app);
     }
 
     /**
-     * Adds the services and settings for the LunrJs Engine.
+     * Adds the services and settings for the LunrJs Adapter.
      *
      * @param Application $app
      *
@@ -49,14 +48,17 @@ class ServiceProvider implements ServiceProviderInterface
      */
     protected function addLunrJsEngineAndSettings(Application $app)
     {
-        $app['search.engine.lunrjs.schema'] = array();
-        $app['search.engine.lunrjs.path'] = '';
-        $app['search.engine.lunrjs'] = $app->share(
+        // lunrjs settings
+        $app['search.adapter.lunrjs.schema'] = array();
+        $app['search.adapter.lunrjs.path'] = '';
+        
+        // lunrjs adapter
+        $app['search.adapter.lunrjs'] = $app->share(
             function ($app) {
-                new Engine\LunrJs(
-                    new Engine\Configuration\LunrJs(
-                        $app['search.engine.lunrjs.schema'],
-                        $app['search.engine.lunrjs.path']
+                new Adapter\LunrJs(
+                    new Adapter\Configuration\LunrJs(
+                        $app['search.adapter.lunrjs.schema'],
+                        $app['search.adapter.lunrjs.path']
                     )
                 );
             }
@@ -64,7 +66,7 @@ class ServiceProvider implements ServiceProviderInterface
     }
 
     /**
-     * Adds the services and settings for the ElasticSearch Engine.
+     * Adds the services and settings for the ElasticSearch Adapter.
      *
      * @param Application $app
      *
@@ -72,11 +74,75 @@ class ServiceProvider implements ServiceProviderInterface
      */
     protected function addElasticSearchEngineAndSettings(Application $app)
     {
-        $app['search.engine.elasticsearch.uri'] = 'http://localhost:9200';
-        $app['search.engine.elasticsearch'] = $app->share(
+        // ElasticSearch settings
+        $app['search.adapter.elasticsearch.uri'] = 'http://localhost:9200';
+
+        // ElasticSearch adapter
+        $app['search.adapter.elasticsearch'] = $app->share(
             function ($app) {
-                new Engine\Elasticsearch(
-                    new Engine\Configuration\Elasticsearch(new Client(), $app['search.engine.elasticsearch.uri'])
+                new Adapter\Elasticsearch(
+                    new Adapter\Configuration\Elasticsearch(new Client(), $app['search.adapter.elasticsearch.uri'])
+                );
+            }
+        );
+    }
+
+    /**
+     * @param Application $app
+     *
+     * @return void
+     */
+    protected function addEngineManager(Application $app)
+    {
+        $app['search.engine.manager'] = $app->share(function ($app) {
+            $adapterKey = 'search.adapter.' . $app['search.adapter'];
+            $adapter = isset($app[$adapterKey]) ? $app[$adapterKey] : null;
+
+            if (!$adapter instanceof AdapterInterface) {
+                throw new \RuntimeException(
+                    'The provided search adapter "' . $app['search.adapter'] . '" does not exist'
+                );
+            }
+
+            return new EngineManager($adapter);
+        });
+    }
+
+    /**
+     * @param Application $app
+     *
+     * @return void
+     */
+    protected function addClientGenerator(Application $app)
+    {
+        $app['search.client.generator'] = $app->share(function ($app) {
+            if (!isset($app['twig'])) {
+                throw new \RuntimeException(
+                    'The Search Client Generator depends on Twig, make sure that twig is added to the container'
+                );
+            }
+
+            return new Generator($app['twig']);
+        });
+    }
+
+    /**
+     * Appends the Search Writer to the Writer Collection of the transformer.
+     *
+     * @param Application $app
+     *
+     * @return void
+     */
+    protected function appendSearchWriterToWriterCollection(Application $app)
+    {
+        $app->extend(
+            'transformer.writer.collection',
+            function ($app) {
+                /** @var Collection $writerCollection */
+                $writerCollection = $app['transformer.writer.collection'];
+                $writerCollection['Search'] = new Search(
+                    $app['search.engine.manager'],
+                    $app['search.client.generator']
                 );
             }
         );
