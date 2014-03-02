@@ -1,7 +1,7 @@
 <?php
 namespace phpDocumentor\Plugin\Search\Adapter\Configuration;
 
-class LunrJs
+class LunrJs implements ConfigurationInterface
 {
     protected $schema = array();
 

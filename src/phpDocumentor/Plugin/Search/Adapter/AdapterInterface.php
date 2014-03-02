@@ -1,6 +1,7 @@
 <?php
 namespace phpDocumentor\Plugin\Search\Adapter;
 
+use phpDocumentor\Plugin\Search\Adapter\Configuration\ConfigurationInterface;
 use phpDocumentor\Plugin\Search\Document;
 
 interface AdapterInterface
@@ -8,7 +9,7 @@ interface AdapterInterface
     /**
      * Returns the adapter-specific configuration object.
      *
-     * @return object
+     * @return ConfigurationInterface
      */
     public function getConfiguration();
 

@@ -3,7 +3,7 @@ namespace phpDocumentor\Plugin\Search\Adapter\Configuration;
 
 use Guzzle\Http\Client;
 
-class ElasticSearch
+class ElasticSearch implements ConfigurationInterface
 {
     protected $http_client;
     protected $uri;
