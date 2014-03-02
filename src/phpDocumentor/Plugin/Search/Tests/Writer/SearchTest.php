@@ -6,9 +6,13 @@ use Mockery as m;
 use phpDocumentor\Descriptor\Collection;
 use phpDocumentor\Descriptor\DescriptorAbstract;
 use phpDocumentor\Descriptor\ProjectDescriptor;
+use phpDocumentor\Plugin\Search\Client\GeneratorInterface;
 use phpDocumentor\Plugin\Search\EngineManager;
 use phpDocumentor\Plugin\Search\Writer\Search;
 
+/**
+ * Tests for the phpDocumentor\Plugin\Search\Writer\Search class.
+ */
 class SearchTest extends \PHPUnit_Framework_TestCase
 {
     /** @var Search */
@@ -17,17 +21,17 @@ class SearchTest extends \PHPUnit_Framework_TestCase
     /** @var EngineManager|m\MockInterface */
     private $engineManagerMock;
 
-    /** @var \Twig_Environment|m\MockInterface */
-    private $twigMock;
+    /** @var GeneratorInterface|m\MockInterface */
+    private $generatorMock;
 
     /**
      * Sets up the fixture and its dependencies.
      */
     protected function setUp()
     {
-        $this->engineManagerMock = m::mock('phpDocumentor\Plugin\Search\EngineManager');
-        $this->twigMock = m::mock('\Twig_Environment');
-        $this->fixture = new Search($this->engineManagerMock, $this->twigMock);
+        $this->engineManagerMock = m::mock('phpDocumentor\Plugin\Search\EngineManager')->shouldIgnoreMissing();
+        $this->generatorMock = m::mock('phpDocumentor\Plugin\Search\Client\Generator')->shouldIgnoreMissing();
+        $this->fixture = new Search($this->engineManagerMock, $this->generatorMock);
     }
 
     /**
@@ -36,7 +40,7 @@ class SearchTest extends \PHPUnit_Framework_TestCase
     public function testIfDependenciesAreRegisteredUponInitialization()
     {
         $this->assertAttributeSame($this->engineManagerMock, 'engineManager', $this->fixture);
-        $this->assertAttributeSame($this->twigMock, 'twig', $this->fixture);
+        $this->assertAttributeSame($this->generatorMock, 'generator', $this->fixture);
     }
 
     /**
@@ -49,15 +53,63 @@ class SearchTest extends \PHPUnit_Framework_TestCase
         // Arrange
         $projectDescriptorMock = $this->givenAProjectDescriptor();
         $this->whenProjectDescriptorHasTwoDescriptors($projectDescriptorMock);
+        $this->whenEngineManagerProvidesAnElasticSearchAdapter();
         $this->thenEngineManagerShouldPersistTwoDocuments();
         $this->thenEngineManagerShouldFlushDocumentsToEngine();
-        $this->whenEngineManagerProvidesAnElasticSearchAdapter();
 
         // Act
         $this->fixture->transform($projectDescriptorMock, m::mock('phpDocumentor\Transformer\Transformation'));
 
         // Assert
         $this->assertTrue(true);
+    }
+
+    /**
+     * @covers phpDocumentor\Plugin\Search\Writer\Search::writeClientToFile
+     * @covers phpDocumentor\Plugin\Search\Writer\Search::writeClientCodeToOutputLocation
+     */
+    public function testFrontendClientIsWrittenToFile()
+    {
+        // Arrange
+        $expectedCode          = 'code';
+        $projectDescriptorMock = $this->givenAProjectDescriptor();
+        $adapterMock           = $this->whenEngineManagerProvidesAnElasticSearchAdapter();
+        $transformationMock    = $this->whenTransformationWritesToTmpFolder();
+        $this->whenGeneratorUsesAdapterAndTypeToGenerateCode(
+            $adapterMock,
+            GeneratorInterface::CLIENT_TYPE_FRONTEND,
+            $expectedCode
+        );
+
+        // Act
+        $this->fixture->transform($projectDescriptorMock, $transformationMock);
+
+        // Assert
+        $this->assertStringEqualsFile(sys_get_temp_dir() . '/search.js', $expectedCode);
+    }
+
+    /**
+     * @covers phpDocumentor\Plugin\Search\Writer\Search::writeClientToFile
+     * @covers phpDocumentor\Plugin\Search\Writer\Search::writeClientCodeToOutputLocation
+     */
+    public function testBackendClientIsWrittenToFile()
+    {
+        // Arrange
+        $expectedCode          = 'code';
+        $projectDescriptorMock = $this->givenAProjectDescriptor();
+        $adapterMock           = $this->whenEngineManagerProvidesAnElasticSearchAdapter();
+        $transformationMock    = $this->whenTransformationWritesToTmpFolder();
+        $this->whenGeneratorUsesAdapterAndTypeToGenerateCode(
+            $adapterMock,
+            GeneratorInterface::CLIENT_TYPE_BACKEND,
+            $expectedCode
+        );
+
+        // Act
+        $this->fixture->transform($projectDescriptorMock, $transformationMock);
+
+        // Assert
+        $this->assertStringEqualsFile(sys_get_temp_dir() . '/search.php', $expectedCode);
     }
 
     /**
@@ -114,13 +166,15 @@ class SearchTest extends \PHPUnit_Framework_TestCase
     /**
      * Haves the Engine Manager mock return an Elastic Search adapter.
      *
-     * @return void
+     * @return m\MockInterface
      */
     protected function whenEngineManagerProvidesAnElasticSearchAdapter()
     {
         $adapterMock = m::mock('phpDocumentor\Plugin\Search\Adapter\ElasticSearch');
         $adapterMock->shouldReceive('getConfiguration')->andReturn(new \stdClass());
         $this->engineManagerMock->shouldReceive('getAdapter')->andReturn($adapterMock);
+
+        return $adapterMock;
     }
 
     /**
@@ -139,5 +193,27 @@ class SearchTest extends \PHPUnit_Framework_TestCase
             ->shouldReceive('getSummary')->andReturn('Summary')
             ->shouldReceive('getDescription')->andReturn('Description')
             ->getMock();
+    }
+
+    /**
+     * @param $adapterMock
+     * @param $type
+     * @param $expectedCode
+     */
+    protected function whenGeneratorUsesAdapterAndTypeToGenerateCode($adapterMock, $type, $expectedCode)
+    {
+        $this->generatorMock->shouldReceive('generate')->once()
+            ->with($adapterMock, $type)->andReturn($expectedCode);
+    }
+
+    /**
+     * @return m\MockInterface
+     */
+    protected function whenTransformationWritesToTmpFolder()
+    {
+        $transformationMock = m::mock('phpDocumentor\Transformer\Transformation');
+        $transformationMock->shouldReceive('getTransformer->getTarget')->andReturn(sys_get_temp_dir());
+        $transformationMock->shouldReceive('getArtifact')->andReturn('');
+        return $transformationMock;
     }
 }
