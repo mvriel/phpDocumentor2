@@ -14,7 +14,7 @@ namespace phpDocumentor\Plugin\Search\Writer;
 use phpDocumentor\Descriptor\Collection;
 use phpDocumentor\Descriptor\DescriptorAbstract;
 use phpDocumentor\Descriptor\ProjectDescriptor;
-use phpDocumentor\Plugin\Search\Client\Generator;
+use phpDocumentor\Plugin\Search\Client\GeneratorInterface;
 use phpDocumentor\Plugin\Search\Document;
 use phpDocumentor\Plugin\Search\EngineManager;
 use phpDocumentor\Transformer\Transformation;
@@ -33,19 +33,19 @@ class Search extends WriterAbstract
     /** @var EngineManager */
     protected $engineManager;
 
-    /** @var \Twig_Environment */
-    private $twig;
+    /** @var GeneratorInterface */
+    private $generator;
 
     /**
      * Sets the required dependencies for this writer on this object.
      *
-     * @param EngineManager     $engineManager
-     * @param \Twig_Environment $twig
+     * @param EngineManager $engineManager
+     * @param GeneratorInterface $generator
      */
-    public function __construct(EngineManager $engineManager, \Twig_Environment $twig)
+    public function __construct(EngineManager $engineManager, GeneratorInterface $generator)
     {
         $this->engineManager = $engineManager;
-        $this->twig          = $twig;
+        $this->generator     = $generator;
     }
 
     /**
@@ -59,8 +59,8 @@ class Search extends WriterAbstract
     public function transform(ProjectDescriptor $project, Transformation $transformation)
     {
         $this->populateSearchEngine($project);
-        $this->writeClientToFile($transformation, 'backend', 'search.php');
-        $this->writeClientToFile($transformation, 'frontend', 'search.js');
+        $this->writeClientToFile($transformation, GeneratorInterface::CLIENT_TYPE_BACKEND, 'search.php');
+        $this->writeClientToFile($transformation, GeneratorInterface::CLIENT_TYPE_FRONTEND, 'search.js');
     }
 
     /**
@@ -92,9 +92,8 @@ class Search extends WriterAbstract
      */
     protected function writeClientToFile(Transformation $transformation, $clientType, $destinationFilename)
     {
-        $generator = new Generator($this->twig);
         $this->writeClientCodeToOutputLocation(
-            $generator->generate($this->engineManager->getAdapter(), $clientType),
+            $this->generator->generate($this->engineManager->getAdapter(), $clientType),
             $transformation,
             $destinationFilename
         );
