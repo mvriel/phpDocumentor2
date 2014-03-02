@@ -5,6 +5,7 @@ namespace phpDocumentor\Plugin\Search\Tests\Client;
 use Mockery as m;
 use phpDocumentor\Plugin\Search\Adapter\ElasticSearch;
 use phpDocumentor\Plugin\Search\Client\Generator;
+use phpDocumentor\Plugin\Search\Client\GeneratorInterface;
 
 /**
  * Tests for the phpDocumentor\Plugin\Search\Client\Generator class.
@@ -44,7 +45,7 @@ class GeneratorTest extends \PHPUnit_Framework_TestCase
     public function testIfBackendClientCodeIsGenerated()
     {
         // Arrange
-        $type        = 'backend';
+        $type        = GeneratorInterface::CLIENT_TYPE_BACKEND;
         $expected    = 'abc';
         $adapterMock = $this->givenAnElasticSearchEngine();
         $this->thenTwigShouldRenderUsingTheConfiguration($adapterMock->getConfiguration(), $expected);

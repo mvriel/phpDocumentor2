@@ -9,7 +9,7 @@ use \phpDocumentor\Plugin\Search\Adapter\AdapterInterface;
  * This class is used by, for example, templates to receive a specific piece of javascript or PHP code
  * that can be used as a client and to interact with the associated engine.
  */
-class Generator
+class Generator implements GeneratorInterface
 {
     /** @var \Twig_Environment */
     protected $twig;
@@ -42,7 +42,7 @@ class Generator
      *
      * @return string the client code or an empty string if the given type is not supported for this engine.
      */
-    public function generate(AdapterInterface $engine, $type = 'backend')
+    public function generate(AdapterInterface $engine, $type = GeneratorInterface::CLIENT_TYPE_BACKEND)
     {
         return $this->generateClientFromTemplateWithConfiguration(
             $this->getTemplateFolder() . $this->getTemplateFilename($engine, $type),
