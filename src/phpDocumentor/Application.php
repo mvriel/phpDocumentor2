@@ -70,7 +70,6 @@ class Application extends Cilex
             return new Stopwatch();
         };
 
-        $this->setTimezone();
         $this->addAutoloader();
         $this->addSerializer();
         $this->addConfiguration();
@@ -100,9 +99,10 @@ class Application extends Cilex
      */
     protected function defineIniSettings()
     {
+        $this->setTimezone();
         ini_set('memory_limit', -1);
 
-        if (extension_loaded('opcache')) {
+        if (extension_loaded('Zend OPcache')) {
             ini_set('opcache.save_comments', 1);
             ini_set('opcache.load_comments', 1);
         }
@@ -151,12 +151,15 @@ class Application extends Cilex
      * date/time functions. What is checked is php.ini, and if the PHP version
      * is prior to 5.4, the TZ environment variable.
      *
+     * @link http://php.net/manual/en/function.date-default-timezone-get.php for more information how PHP determines the
+     *     default timezone.
+     *
      * @return void
      */
     public function setTimezone()
     {
-        if (false === ini_get('date.timezone') || (version_compare(phpversion(), '5.4.0', '<')
-            && false === getenv('TZ'))
+        if (false === ini_get('date.timezone')
+            || (version_compare(phpversion(), '5.4.0', '<') && false === getenv('TZ'))
         ) {
             date_default_timezone_set('UTC');
         }

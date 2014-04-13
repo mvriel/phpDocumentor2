@@ -9,11 +9,11 @@
  * @link      http://phpdoc.org
  */
 
-namespace phpDocumentor\Plugin\Core\Transformer\Writer;
+namespace phpDocumentor\Plugin\Twig\Writer;
 
 use phpDocumentor\Descriptor\DescriptorAbstract;
 use phpDocumentor\Descriptor\ProjectDescriptor;
-use phpDocumentor\Plugin\Core\Twig\Extension;
+use phpDocumentor\Plugin\Twig\Extension;
 use phpDocumentor\Transformer\Router\ForFileProxy;
 use phpDocumentor\Transformer\Router\Queue;
 use phpDocumentor\Transformer\Template;
@@ -291,7 +291,7 @@ class Twig extends WriterAbstract implements Routable
 
             // to support 'normal' Twig extensions we check the interface to determine what instantiation to do.
             $implementsInterface = in_array(
-                'phpDocumentor\Plugin\Core\Twig\ExtensionInterface',
+                'phpDocumentor\Plugin\Twig\ExtensionInterface',
                 class_implements($extensionValue)
             );
 
