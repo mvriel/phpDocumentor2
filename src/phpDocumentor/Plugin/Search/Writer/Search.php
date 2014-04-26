@@ -109,6 +109,7 @@ class Search extends WriterAbstract
      */
     protected function populateDocumentWithDescriptor(Document $document, DescriptorAbstract $descriptor)
     {
+        $document['type']        = substr(strtolower(get_class($descriptor)), 0, -9);
         $document['fqsen']       = $descriptor->getFullyQualifiedStructuralElementName();
         $document['name']        = $descriptor->getName();
         $document['file']        = $descriptor->getFile();
