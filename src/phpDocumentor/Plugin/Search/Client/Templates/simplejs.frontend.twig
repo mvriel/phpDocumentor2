@@ -1,0 +1,169 @@
+{#
+<form id="searchForm" action="">
+    <ul class="nav">
+        <li class="dropdown" id="searchDropdown">
+            <input class="search dropdown-toggle" id="search" type="text" autofocus spellcheck="false" autocomplete="off" data-toggle="dropdown" placeholder="recherche" accesskey="s"/>
+            <ul class="dropdown-menu dropdown-search">
+                <li>Constante</li>
+                <li>
+                    <ul id="searchedConstants">
+                    </ul>
+                </li>
+                <li>Fonctions</li>
+                <li>
+                    <ul id="searchedFunctions">
+                    </ul>
+                </li>
+                <li>Méthodes</li>
+                <li>
+                    <ul id="searchedMethode">
+                    </ul>
+                </li>
+                <li>Classes</li>
+                <li>
+                    <ul id="searchedClasses">
+                    </ul>
+                </li>
+                <li>Namespaces</li>
+                <li>
+                    <ul id="searchedNamespaces">
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</form>
+#}
+
+{% macro renderSearchNode(type, node, parent) %}
+	{% if node %}
+		['{{ type|e('js') }}','{{ node.name|e('js') }}','{{ node|route("url")|raw }}'
+		{% if parent %}
+			,'{{ parent.name|e('js') }}'
+		{% endif %}
+		],
+	{% endif %}
+{% endmacro %}
+
+{% macro renderSearchMethode(node) %}
+    {% import _self as self %}
+	{% if node %}
+		{% for method in node.inheritedMethods.merge(node.methods.merge(node.magicMethods))|sort_asc %}
+			{{ self.renderSearchNode("method", method, node) }}
+		{% endfor %}
+	{% endif %}
+{% endmacro %}
+
+{% block content %}
+    {% import _self as self %}
+	{% set namespaces = project.indexes.namespaces %}
+	{% set classes = project.indexes.classes %}
+	{% set interfaces = project.indexes.interfaces %}
+	{% set traits = project.indexes.traits %}
+	{% set packages = project.indexes.packages %}
+	{% set functions = project.namespace.functions %}
+	{% set constants = project.namespace.constants %}
+
+var listElements = [
+	{% for node in namespaces|sort_asc %}
+		{{ self.renderSearchNode("namespace", node) }}
+	{% endfor %}
+	{% for node in classes|sort_asc %}
+		{{ self.renderSearchNode("class", node) }}
+		{{ self.renderSearchMethode(node) }}
+	{% endfor %}
+	{% for node in interfaces|sort_asc %}
+		{{ self.renderSearchNode("interface", node) }}
+		{{ self.renderSearchMethode(node) }}
+	{% endfor %}
+	{% for node in traits|sort_asc %}
+		{{ self.renderSearchNode("traits", node) }}
+		{{ self.renderSearchMethode(node) }}
+	{% endfor %}
+	{% for node in packages|sort_asc %}
+		{{ self.renderSearchNode("package", node) }}
+	{% endfor %}
+	{% for node in functions|sort_asc %}
+		{{ self.renderSearchNode("function", node) }}
+	{% endfor %}
+	{% for node in constants|sort_asc %}
+		{{ self.renderSearchNode("constant", node) }}
+	{% endfor %}
+];
+var len = listElements.length;
+var url = document.URL;
+var dividedUrl = url.split("/");
+var parentUrl = dividedUrl[dividedUrl.length - 2];
+if (parentUrl!='classes' && parentUrl!='namespaces') {
+	parentUrl = dividedUrl[dividedUrl.length - 1];
+}
+url = url.substring(0, url.lastIndexOf(parentUrl));
+for(var i = 0; i < len; i++) {
+	listElements[i][2] = listElements[i][2].replace("namespaces/.html", "namespaces/default.html");
+	listElements[i][2] = listElements[i][2].replace("#function_", "#method_");
+	listElements[i][2] = url + listElements[i][2];
+}
+delete parentUrl;
+delete dividedUrl;
+delete url;
+
+function search() {
+	var word = document.getElementById('search').value.toLowerCase();
+	var dropDownDom = document.getElementById('searchDropdown');
+	var constsDom = document.getElementById('searchedConstants');
+	var funcsDom = document.getElementById('searchedFunctions');
+	var methDom = document.getElementById('searchedMethode');
+	var classDom = document.getElementById('searchedClasses');
+	var nspaceDom = document.getElementById('searchedNamespaces');
+	constsDom.innerHTML = "";
+	funcsDom.innerHTML = "";
+	methDom.innerHTML = "";
+	classDom.innerHTML = "";
+	nspaceDom.innerHTML = "";
+
+	if (!dropDownDom.className.contains(' open')) {
+		dropDownDom.className += ' open';
+	}
+
+	for(var i = 0; i < len; i++) {
+		if (listElements[i][1].toLowerCase().contains(word)) {
+			var name = listElements[i][1];
+			if (listElements[i].length > 3) {
+				name += '(' + listElements[i][3] + ')';
+			}
+			if (listElements[i][0]=="constant") {
+				constsDom.innerHTML += '<li><a href="' + listElements[i][2] + '">' + name + '</a></li>';
+			}else if (listElements[i][0]=="function") {
+				funcsDom.innerHTML += '<li><a href="' + listElements[i][2] + '">' + name + '</a></li>';
+			}else if (listElements[i][0]=="method") {
+				methDom.innerHTML += '<li><a href="' + listElements[i][2] + '">' + name + '</a></li>';
+			}else if (listElements[i][0]=="class") {
+				classDom.innerHTML += '<li><a href="' + listElements[i][2] + '">' + name + '</a></li>';
+			}else if (listElements[i][0]=="namespace") {
+				nspaceDom.innerHTML += '<li><a href="' + listElements[i][2] + '">' + name + '</a></li>';
+			}
+		}
+	}
+}
+
+function go() {
+	var word = document.getElementById('search').value.toLowerCase();
+	var formDom = document.getElementById('searchForm');
+	for(var i = 0; i < len; i++) {
+		if (listElements[i][1].toLowerCase().contains(word)) {
+			formDom.action = listElements[i][2];
+		}
+	}
+	return true;
+}
+
+function initSearch() {
+	document.getElementById('search').addEventListener("keyup",search, false);
+	document.getElementById('searchForm').addEventListener("submit",go, false);
+	search();
+	var dropDownDom = document.getElementById('searchDropdown');
+	dropDownDom.className = dropDownDom.className.replace(' open', '');
+}
+
+window.addEventListener("load", initSearch, false);
+{% endblock %}
