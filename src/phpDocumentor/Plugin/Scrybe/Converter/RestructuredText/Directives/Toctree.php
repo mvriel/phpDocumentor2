@@ -125,14 +125,15 @@ class Toctree extends \ezcDocumentRstDirective implements \ezcDocumentRstXhtmlDi
      *
      * The caption is retrieved by converting the filename to a human-readable format.
      *
-     * @param \ezcDocumentRstToken $file_name
+     * @param string $fileName
      *
      * @return string
      */
-    protected function getCaption($file_name)
+    protected function getCaption($fileName)
     {
         $toc = $this->visitor->getTableOfContents();
-        $name = $toc[$file_name]->getName();
-        return $name ? $name : $file_name;
+        $name = $toc[$fileName]->getName();
+
+        return $name ? $name : $fileName;
     }
 }
