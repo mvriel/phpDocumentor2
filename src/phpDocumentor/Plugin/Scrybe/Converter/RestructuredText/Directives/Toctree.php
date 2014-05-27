@@ -108,15 +108,15 @@ class Toctree extends \ezcDocumentRstDirective implements \ezcDocumentRstXhtmlDi
 
     protected function addLinksToTableOfContents()
     {
-        foreach ($this->links as $file_name) {
-            /** @var Discover $visitor */
-            $visitor = $this->visitor;
-            if ($visitor instanceof Discover) {
-                $toc = $visitor->getTableOfContents();
-                $file = $toc[$file_name];
+        if (!$this->visitor instanceof Discover) {
+            return;
+        }
 
-                $visitor->addFileToLastHeading($file);
-            }
+        $toc = $this->visitor->getTableOfContents();
+        foreach ($this->links as $fileName) {
+            $this->visitor->addFileToLastHeading(
+                $toc[$this->getNormalizedFileName($this->visitor, $fileName)]
+            );
         }
     }
 
@@ -132,8 +132,30 @@ class Toctree extends \ezcDocumentRstDirective implements \ezcDocumentRstXhtmlDi
     protected function getCaption($fileName)
     {
         $toc = $this->visitor->getTableOfContents();
-        $name = $toc[$fileName]->getName();
+        $normalizedFileName = $this->getNormalizedFileName($this->visitor, $fileName);
+        var_dump('a: ' . $fileName, $normalizedFileName); # the headings are not read correctly
+        $name = $toc[$normalizedFileName]->getName();
 
         return $name ? $name : $fileName;
+    }
+
+    /**
+     * @param $visitor
+     * @param $fileName
+     * @return string
+     */
+    protected function getNormalizedFileName($visitor, $fileName)
+    {
+        if (!$visitor instanceof Discover) {
+            return $fileName;
+        }
+
+        $fileName = dirname($visitor->getFilenameWithoutExtension()) . '/' . $fileName;
+        if (substr($fileName, 0, 2) == './') {
+            $fileName = substr($fileName, 2);
+            return $fileName;
+        }
+
+        return $fileName;
     }
 }

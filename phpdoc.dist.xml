@@ -14,6 +14,7 @@
     </files>
     <plugins>
         <plugin path="Core" />
+        <plugin path="Scrybe" />
     </plugins>
     <transformations>
         <template name="clean" />

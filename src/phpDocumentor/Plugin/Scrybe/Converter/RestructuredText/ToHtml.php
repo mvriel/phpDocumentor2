@@ -57,6 +57,7 @@ class ToHtml extends BaseConverter implements ToHtmlInterface
                 continue;
             }
         }
+        $this->getTableOfContents()->dump();
     }
 
     /**

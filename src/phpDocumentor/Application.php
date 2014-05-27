@@ -29,16 +29,16 @@ use Symfony\Component\Console\Application as ConsoleApplication;
 use Symfony\Component\Console\Shell;
 use Symfony\Component\Stopwatch\Stopwatch;
 
-if (!\Phar::running()) {
-    define('DOMPDF_ENABLE_AUTOLOAD', false);
-    if (file_exists(__DIR__ . '/../../vendor/dompdf/dompdf/dompdf_config.inc.php')) {
-        // when normally installed, get it from the vendor folder
-        require_once(__DIR__ . '/../../vendor/dompdf/dompdf/dompdf_config.inc.php');
-    } else {
-        // when installed using composer, include it from that location
-        require_once(__DIR__ . '/../../../../dompdf/dompdf/dompdf_config.inc.php');
-    }
-}
+//if (!\Phar::running()) {
+//    define('DOMPDF_ENABLE_AUTOLOAD', false);
+//    if (file_exists(__DIR__ . '/../../vendor/dompdf/dompdf/dompdf_config.inc.php')) {
+//        // when normally installed, get it from the vendor folder
+//        require_once(__DIR__ . '/../../vendor/dompdf/dompdf/dompdf_config.inc.php');
+//    } else {
+//        // when installed using composer, include it from that location
+//        require_once(__DIR__ . '/../../../../dompdf/dompdf/dompdf_config.inc.php');
+//    }
+//}
 
 /**
  * Application class for phpDocumentor.

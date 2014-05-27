@@ -10,6 +10,7 @@
  */
 
 namespace phpDocumentor\Plugin\Scrybe\Converter\Metadata;
+use phpDocumentor\Plugin\Scrybe\Converter\Metadata\TableOfContents\BaseEntry;
 
 /**
  * This collection manages which headings were discovered during the discovery phase and stores them as entries.
@@ -70,5 +71,37 @@ class TableOfContents extends \ArrayObject
     public function getModules()
     {
         return $this->modules;
+    }
+
+    /**
+     * Dumps this a branch and subbranches of this TOC to stdout; or dumps the entire tree when no parameters are
+     * passed.
+     *
+     * @param BaseEntry[] $entries
+     * @param string      $prefix
+     *
+     * @return string
+     */
+    public function dump($entries = null, $prefix = '')
+    {
+        $entries = $entries !== null ? $entries : $this;
+        $index = 0;
+
+        /** @var TableOfContents\File $entry */
+        foreach ($entries as $entry) {
+            // only show items without parent in the first level to prevent duplicate output.
+            // the TOC has all files registered
+            if (!$prefix && $entry->getParent()) {
+                continue;
+            }
+
+            $index++;
+            $name = $entry->getName() ?: '[NO NAME]';
+            echo $prefix . $index . '. ' . $name . ' (' . $entry->getFilename() . ')' . PHP_EOL;
+
+            if (strlen($prefix) < 20) {
+                $this->dump($entry->getChildren(), $prefix . $index . '.');
+            }
+        }
     }
 }
