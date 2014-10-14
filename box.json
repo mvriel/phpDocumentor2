@@ -68,6 +68,17 @@
         "vendor/autoload.php",
         "VERSION"
     ],
+    "files-bin": [
+        "src/phpDocumentor/Configuration.php",
+        "src/phpDocumentor/Configuration/Logging.php",
+        "src/phpDocumentor/Parser/Configuration.php",
+        "src/phpDocumentor/Parser/Configuration/Files.php",
+        "src/phpDocumentor/Translator/Configuration.php",
+        "src/phpDocumentor/Transformer/Configuration.php",
+        "src/phpDocumentor/Transformer/Configuration/Transformations.php",
+        "src/phpDocumentor/Transformer/Configuration/ExternalClassDocumentation.php",
+        "src/phpDocumentor/Transformer/Configuration/Transformations/Template.php"
+    ],
     "finder": [
         {
             "name": "*.php",
